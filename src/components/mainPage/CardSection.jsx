@@ -9,8 +9,8 @@ const CardSection = () => {
     <div className="w-full">
       {/* Заголовок со стрелкой */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl sm:text-2xl text-black font-bold">Рекомендации</h2>
-        <Link href="/allRecommendations">
+        <h2 className="text-xl sm:text-2xl text-black font-bold">Топ Рекомендации</h2>
+        <Link href="/allRecommendations" className="flex items-center gap-1 text-sm font-semibold text-gray-600 hover:text-black transition-colors">
           <button className="flex items-center gap-1 text-sm font-semibold text-gray-600 hover:text-black transition-colors">
             <span>Все</span>
             <ArrowRight className="h-5 w-5 text-gray-500" />
