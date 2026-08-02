@@ -39,7 +39,7 @@ const Card = ({ data = {} }) => {
             e.stopPropagation()
             setIsLiked(!isLiked)
           }}
-          className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-10"
+          className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-5"
           aria-label="В избранное"
         >
           <Heart 

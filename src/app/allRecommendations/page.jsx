@@ -30,6 +30,7 @@ export default function AllRecommendationsPage() {
   // 1. Считываем Query-параметры из URL
   const rawCategory = searchParams.get('category') || 'all'
   const minRate = searchParams.get('rate')
+  const city = searchParams.get('city') || undefined
 
   // Нормализуем категорию
   const categoryMap = {
@@ -50,6 +51,7 @@ export default function AllRecommendationsPage() {
     guests: guests > 1 ? guests : undefined,
     checkIn: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
     checkOut: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
+    city: city || undefined,
   }
 
   // 4. Запрос TanStack Query

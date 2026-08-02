@@ -5,6 +5,7 @@ import Card from "../ui/Card"
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAllAccommodations } from "../../hooks/useAccommodationsQuery"
+import SeeAllCard from "../../components/SeeAllCard.jsx"
 
 const CardSection = () => {
   const router = useRouter()
@@ -25,6 +26,18 @@ const CardSection = () => {
   const handleSeeAll = (type) => {
     router.push(`/allRecommendations?category=${type}`)
   }
+
+  const handleSeeAllCity = (cityName) => {
+  router.push(`/allRecommendations?city=${cityName}`)
+}
+
+  const { 
+  data: tbilisiApartments = [], 
+  isLoading: isTbilisiLoading, 
+  isError: isTbilisiError 
+} = useAllAccommodations({ city: 'Tbilisi' })
+
+
 
   return (
     <div className="w-full space-y-9">
@@ -61,18 +74,7 @@ const CardSection = () => {
 
           {/* Карточка «Посмотреть все» */}
           <div className="w-[140px] sm:w-[180px] md:w-[200px] shrink-0 flex">
-            <button 
-              type="button"
-              onClick={() => handleSeeAll('apartments')} 
-              className="w-full h-[80%] min-h-[220px] sm:min-h-[260px] border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center gap-3 p-4 bg-gray-50/50 hover:bg-gray-100/80 hover:border-gray-400 active:scale-95 transition-all group cursor-pointer"
-            >
-              <div className="p-3 bg-white rounded-full shadow-sm border border-gray-200 group-hover:scale-110 transition-transform">
-                <ArrowRight className="w-6 h-6 text-gray-800" />
-              </div>
-              <span className="font-semibold text-sm sm:text-base text-gray-800 text-center">
-                Посмотреть все
-              </span>
-            </button>
+            <SeeAllCard onClick={() => handleSeeAll('apartments')} />
           </div>
         </div>
       </div>
@@ -109,21 +111,48 @@ const CardSection = () => {
 
           {/* Карточка «Посмотреть все» */}
           <div className="w-[140px] sm:w-[180px] md:w-[200px] shrink-0 flex">
-            <button 
-              type="button"
-              onClick={() => handleSeeAll('hotels')} 
-              className="w-full h-[80%] min-h-[220px] sm:min-h-[260px] border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center gap-3 p-4 bg-gray-50/50 hover:bg-gray-100/80 hover:border-gray-400 active:scale-95 transition-all group cursor-pointer"
-            >
-              <div className="p-3 bg-white rounded-full shadow-sm border border-gray-200 group-hover:scale-110 transition-transform">
-                <ArrowRight className="w-6 h-6 text-gray-800" />
-              </div>
-              <span className="font-semibold text-sm sm:text-base text-gray-800 text-center">
-                Посмотреть все
-              </span>
-            </button>
+            <SeeAllCard onClick={() => handleSeeAll('hotels')} />
           </div>
         </div>
       </div>
+         {/* ================= СЕКЦИЯ 2: Tbilisi ================= */}
+  <div>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-xl sm:text-2xl text-black font-bold">
+      Тбилиси: свободное жилье в эти выходные
+    </h2>
+    <Link 
+      href="/allRecommendations?city=Tbilisi" 
+      className="flex items-center gap-1 text-sm font-semibold text-gray-600 hover:text-black transition-colors"
+    >
+      <span>Все</span>
+      <ArrowRight className="h-5 w-5 text-gray-500" />
+    </Link>
+  </div>
+
+  <div className="w-full overflow-x-auto no-scrollbar flex items-stretch gap-4 py-2 px-1">
+    {isTbilisiLoading ? (
+      Array.from({ length: 4 }).map((_, idx) => (
+        <div key={idx} className="w-[180px] sm:w-[220px] md:w-[260px] shrink-0 h-[260px] bg-gray-100 animate-pulse rounded-2xl" />
+      ))
+    ) : isTbilisiError ? (
+      <p className="text-sm text-red-500 py-4">Не удалось загрузить жилье в Тбилиси</p>
+    ) : tbilisiApartments.length === 0 ? (
+      <p className="text-sm text-gray-400 py-4">Нет доступных вариантов в Тбилиси</p>
+    ) : (
+      tbilisiApartments.slice(0, 6).map((item) => (
+        <div key={item.id} className="w-[180px] sm:w-[220px] md:w-[260px] shrink-0">
+          <Card data={item} />
+        </div>
+      ))
+    )}
+
+    {/* Карточка «Посмотреть все» */}
+    <div className="w-[140px] sm:w-[180px] md:w-[200px] shrink-0 flex">
+     <SeeAllCard onClick={() => handleSeeAllCity('Tbilisi')} />
+    </div>
+  </div>
+  </div>
 
     </div>
   )

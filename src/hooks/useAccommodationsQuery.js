@@ -8,6 +8,7 @@ export const useAllAccommodations = (params = {}) => {
   return useQuery({
     queryKey: ['accommodations', 'all', params],
     queryFn: () => getAccommodations(params),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
   })
 }
