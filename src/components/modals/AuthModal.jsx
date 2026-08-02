@@ -10,6 +10,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useGoogleLogin } from '@react-oauth/google' // 🔥 Импортируем хук Google
 import { login, register as registerUser, loginWithGoogle } from '../../api/authApi' 
 
+
 // Схемы Zod
 const loginSchema = z.object({
   email: z.string().min(1, 'Введите email или логин'),
@@ -19,6 +20,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email('Некорректный формат Email'),
   password: z.string().min(6, 'Пароль должен быть от 6 символов'),
+  avatar: z.string().optional(), 
 })
 
 
@@ -27,6 +29,7 @@ const AuthModal = ({ isOpen, onClose }) => {
   const router = useRouter()
   const [authMode, setAuthMode] = useState('signin')
   const [serverError, setServerError] = useState('')
+  
 
   // Общая функция успеха после любого входа (Form или Google)
   const handleAuthSuccess = (data) => {
@@ -99,7 +102,7 @@ const AuthModal = ({ isOpen, onClose }) => {
 
   const onSubmit = (data) => {
     setServerError('')
-    mutate({ email: data.email, password: data.password })
+    mutate({ email: data.email, password: data.password, avatar: data.avatar }) // Передаем avatar при регистрации
   }
 
   const isLoading = isPending || googleMutation.isPending

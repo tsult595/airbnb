@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "src/app/layout.jsx", "src/components/mainPage/HeaderLg.jsx"  ],
+, "src/app/layout.jsx", "src/components/mainPage/HeaderLg.jsx", "next.config copy.ts"  ],
   "exclude": ["node_modules"]
 }

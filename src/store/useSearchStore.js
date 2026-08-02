@@ -1,30 +1,13 @@
-// store/useSearchStore.js
-import { create } from 'zustand';
+import { create } from 'zustand'
 
 export const useSearchStore = create((set) => ({
-  // Состояние фильтров
+  activeTab: 'all',
+  dateRange: undefined,
   location: '',
-  dateRange: { from: undefined, to: undefined },
   guests: 1,
-  activeCategory: null,
 
-  // Состояние интерфейса
-  isCalendarOpen: false,
-
-  // Экшены
-  setLocation: (location) => set({ location }),
+  setActiveTab: (activeTab) => set({ activeTab }),
   setDateRange: (dateRange) => set({ dateRange }),
+  setLocation: (location) => set({ location }),
   setGuests: (guests) => set({ guests }),
-  setActiveCategory: (activeCategory) => set({ activeCategory }),
-  setIsCalendarOpen: (isOpen) => set((state) => ({ 
-    isCalendarOpen: typeof isOpen === 'function' ? isOpen(state.isCalendarOpen) : isOpen 
-  })),
-  
-  // Очистка фильтров
-  resetFilters: () => set({ 
-    location: '', 
-    dateRange: { from: undefined, to: undefined }, 
-    guests: 1, 
-    activeCategory: null 
-  }),
-}));
+}))

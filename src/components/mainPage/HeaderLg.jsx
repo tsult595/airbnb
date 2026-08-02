@@ -5,6 +5,7 @@ import Image from "next/image"
 import logo from '../../assets/airbnb.png'
 import { Globe, Menu, Search } from "lucide-react"
 import AuthModal from '../modals/AuthModal'
+import { useSearchStore } from '../../store/useSearchStore'
 
 // Импорты для календаря
 import { Calendar } from "../ui/chadcn/calendar"
@@ -12,13 +13,11 @@ import { format } from "date-fns"
 import { ru } from "date-fns/locale"
 
 const HeaderLg = () => {
-  const [activeTab, setActiveTab] = useState('all')
+  const { activeTab, setActiveTab, dateRange, setDateRange } = useSearchStore()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
-
   // Состояния для календаря
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-  const [dateRange, setDateRange] = useState(undefined)
   const calendarRef = useRef(null)
 
   // Закрытие календаря при клике снаружи

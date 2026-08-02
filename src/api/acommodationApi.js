@@ -1,4 +1,4 @@
-import api from "./api"; // Предполагается, что тут твой инстанс axios
+import { api } from "./api";
 
 // 1. Получение всех размещений с поддержкой фильтров (поиск, даты, гости, категория)
 export const getAccommodations = async (params = {}) => {
@@ -29,30 +29,6 @@ export const getAccommodationByRate = async (rate) => {
     return response.data;
   } catch (error) {
     console.error(`Ошибка при получении размещения с рейтингом ${rate}:`, error);
-    throw error;
-  }
-};
-
-// 4. Поиск доступных жильцев по фильтрам (Форматирует данные из UI для бэкенда)
-export const searchAccommodations = async ({ location, dateRange, guests, categoryId }) => {
-  try {
-    const params = {};
-
-    if (location) params.location = location;
-    if (categoryId) params.category = categoryId;
-    if (guests) params.guests = guests;
-
-    // Преобразуем объект дат из вашего DatePicker в формат ISO (YYYY-MM-DD)
-    if (dateRange?.from) {
-      params.checkIn = dateRange.from.toISOString().split("T")[0];
-    }
-    if (dateRange?.to) {
-      params.checkOut = dateRange.to.toISOString().split("T")[0];
-    }
-
-    return await getAccommodations(params);
-  } catch (error) {
-    console.error("Ошибка при поиске доступных вариантов:", error);
     throw error;
   }
 };
