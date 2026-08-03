@@ -2,10 +2,14 @@
 
 import { useState } from 'react'
 import { Heart, Star } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import Image from "next/image"
+
 
 const Card = ({ data = {} }) => {
   const { 
+    id,
+    _id,
     title = "Без названия", 
     price = "0", 
     period = "/ ночь", 
@@ -13,10 +17,33 @@ const Card = ({ data = {} }) => {
     imageUrl 
   } = data
 
+  const router = useRouter()
   const [isLiked, setIsLiked] = useState(false)
 
+  const handleCardClick = () => {
+    const itemId = id || _id
+
+    if (itemId) {
+      router.push(`/apartmentsDetail?id=${itemId}`)
+      return
+    }
+
+    router.push('/apartmentsDetail')
+  }
+
   return (
-    <div className="w-full flex flex-col gap-2 cursor-pointer group">
+    <div
+      className="w-full flex flex-col gap-2 cursor-pointer group"
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          handleCardClick()
+        }
+      }}
+    >
       {/* Контейнер картинки */}
       <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100">
         {imageUrl ? (
