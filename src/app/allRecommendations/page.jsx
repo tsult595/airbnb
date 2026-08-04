@@ -8,9 +8,9 @@ import { ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { useSearchStore } from '../../store/useSearchStore.js'
 import { useAllAccommodations } from '../../hooks/useAccommodationsQuery'
-import Card from '../../components/ui/Card.jsx'
 import AllRecommendationsHeader from '../../components/AllRecommendationsHeader.jsx'
 import AllRecommendationsHeaderSm from '../../components/AllRecommendationsHeaderSm.jsx'
+import CardWithArrow from '../../components/ui/CardWithArrow.jsx'
 
 const Map = dynamic(() => import('../../components/Map.jsx'), {
   ssr: false,
@@ -168,7 +168,7 @@ export default function AllRecommendationsPage() {
                     onMouseLeave={() => setHoveredItem(null)}
                     className="transition-all duration-200 rounded-2xl p-1"
                   >
-                    <Card data={item}/>
+                    <CardWithArrow data={item} />
                   </div>
                 ))}
               </div>
