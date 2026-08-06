@@ -11,6 +11,7 @@ import { useAllAccommodations } from '../../hooks/useAccommodationsQuery'
 import AllRecommendationsHeader from '../../components/AllRecommendationsHeader.jsx'
 import AllRecommendationsHeaderSm from '../../components/AllRecommendationsHeaderSm.jsx'
 import CardWithArrow from '../../components/ui/CardWithArrow.jsx'
+import Pagination from '../../components/Pagination.jsx'
 
 const Map = dynamic(() => import('../../components/Map.jsx'), {
   ssr: false,
@@ -32,13 +33,15 @@ export default function AllRecommendationsPage() {
   const rawCategory = searchParams.get('category') || 'all'
   const minRate = searchParams.get('rate')
   const city = searchParams.get('city') || undefined
-  
-  // 🟢 Получаем выбранные чипсы из URL (разделены запятой)
+  const currentPage = Number(searchParams.get('page')) || 1
+  const limit = Number(searchParams.get('limit')) || 5
+
+  // 🟢 Получаем выбранные чипсы из URL
   const chipsFromUrl = searchParams.get('chips') 
     ? searchParams.get('chips').split(',') 
     : []
 
-  // 2. Функция для клика по чипсу — обновляет URL, сохраняя остальные параметры
+  // 2. Функция переключения чипсов
   const handleToggleChip = (chipLabel) => {
     const params = new URLSearchParams(searchParams.toString())
     let updatedChips = [...chipsFromUrl]
@@ -55,7 +58,9 @@ export default function AllRecommendationsPage() {
       params.delete('chips')
     }
 
-    // Мгновенно обновляем URL (без перезагрузки страницы)
+    // При смене фильтров сбрасываем страницу на 1-ю
+    params.set('page', '1')
+
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
 
@@ -67,20 +72,20 @@ export default function AllRecommendationsPage() {
   }
 
   const isHotelSelected = chipsFromUrl.includes('Гостиница')
-  const categoryForApi = isHotelSelected ? 'hotel' : (categoryMap[rawCategory] || (rawCategory !== 'all' ? rawCategory : undefined))
+  const categoryForApi = isHotelSelected 
+    ? 'hotel' 
+    : (categoryMap[rawCategory] || (rawCategory !== 'all' ? rawCategory : undefined))
 
-  // 4. Разделяем выбранные чипсы на флаговые параметры и массив удобств (amenities)
   const selfCheckIn = chipsFromUrl.includes('Самостоятельное прибытие') ? 'true' : undefined
   const moreThanOneBath = chipsFromUrl.includes('Больше 1 ванной') ? 'true' : undefined
 
-  // Фильтруем чипсы, оставляя только те, которые относятся к amenities
   const selectedAmenities = chipsFromUrl.filter(
     (chip) => !['Гостиница', 'Самостоятельное прибытие', 'Больше 1 ванной'].includes(chip)
   )
 
   const { dateRange, location, guests } = useSearchStore()
 
-  // 5. Итоговый объект для запроса к Бэкенду
+  // 4. Итоговый объект параметров для бэкенда
   const queryParams = {
     category: categoryForApi,
     rate: minRate || undefined,
@@ -91,12 +96,24 @@ export default function AllRecommendationsPage() {
     city: city || undefined,
     selfCheckIn,
     moreThanOneBath,
-    // Превращаем массив удобств в строку с запятыми для бэкенда
     amenities: selectedAmenities.length > 0 ? selectedAmenities.join(',') : undefined,
+    page: currentPage,
+    limit: limit,
   }
 
-  // 6. TanStack Query перезапросит данные при изменении queryParams
-  const { data: accommodations = [], isLoading, isError } = useAllAccommodations(queryParams)
+  // 5. Запрос TanStack Query (вызываем хук ДО работы с `data`)
+  const { data, isLoading, isError } = useAllAccommodations(queryParams)
+
+  // 6. Достаем элементы и общее кол-во страниц из ответа API
+  const accommodations = data?.items || (Array.isArray(data) ? data : [])
+  const totalPages = data?.totalPages || 1
+
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(newPage))
+    
+    router.push(`${pathname}?${params.toString()}`, { scroll: true })
+  }
 
   const pageTitle = city
     ? `Жилье в: ${city}`
@@ -107,11 +124,11 @@ export default function AllRecommendationsPage() {
   return (
     <>
       <div className="block md:hidden"> 
-        <AllRecommendationsHeaderSm/> 
+        <AllRecommendationsHeaderSm /> 
       </div>
       
       <div className="hidden md:block"> 
-        <AllRecommendationsHeader activeChips={chipsFromUrl} onToggleChip={handleToggleChip}/> 
+        <AllRecommendationsHeader activeChips={chipsFromUrl} onToggleChip={handleToggleChip} /> 
       </div>
 
       <div className="w-[94%] max-w-[1850px] mx-auto px-2 sm:px-4 my-6 md:my-30">
@@ -134,47 +151,62 @@ export default function AllRecommendationsPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 relative items-start">
-          <div className="w-full lg:w-1/2 xl:w-[52%]">
-            
-            {isLoading && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-5">
-                {Array.from({ length: 6 }).map((_, idx) => (
-                  <div 
-                    key={idx} 
-                    className="w-full h-[300px] bg-gray-100 animate-pulse rounded-2xl" 
-                  />
-                ))}
-              </div>
-            )}
+          
+          {/* Слева: Карточки и Пагинация */}
+          <div className="w-full lg:w-1/2 xl:w-[52%] flex flex-col justify-between">
+            <div>
+              {isLoading && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-5">
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <div 
+                      key={idx} 
+                      className="w-full h-[300px] bg-gray-100 animate-pulse rounded-2xl" 
+                    />
+                  ))}
+                </div>
+              )}
 
-            {isError && (
-              <div className="text-center py-12 text-red-500 font-medium">
-                Произошла ошибка при загрузке данных. Попробуйте обновить страницу.
-              </div>
-            )}
+              {isError && (
+                <div className="text-center py-12 text-red-500 font-medium">
+                  Произошла ошибка при загрузке данных. Попробуйте обновить страницу.
+                </div>
+              )}
 
-            {!isLoading && !isError && accommodations.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                Вариантов по вашему запросу не найдено.
-              </div>
-            )}
+              {!isLoading && !isError && accommodations.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  Вариантов по вашему запросу не найдено.
+                </div>
+              )}
 
-            {!isLoading && !isError && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-5">
-                {accommodations.map((item) => (
-                  <div
-                    key={item.id}
-                    onMouseEnter={() => setHoveredItem(item)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    className="transition-all duration-200 rounded-2xl p-1"
-                  >
-                    <CardWithArrow data={item} />
-                  </div>
-                ))}
+              {!isLoading && !isError && accommodations.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-5">
+                  {accommodations.map((item) => (
+                    <div
+                      key={item.id}
+                      onMouseEnter={() => setHoveredItem(item)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      className="transition-all duration-200 rounded-2xl p-1"
+                    >
+                      <CardWithArrow data={item} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Пагинация */}
+            {!isLoading && !isError && totalPages > 1 && (
+              <div className="mt-8">
+                <Pagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={handlePageChange} 
+                />
               </div>
             )}
           </div>
 
+          {/* Справа: Карта */}
           <div className="w-full lg:w-1/2 xl:w-[48%] lg:sticky lg:top-20 h-[500px] lg:h-[calc(100vh-100px)]">
             <Map hoveredItem={hoveredItem} items={accommodations} onSelect={(item) => setHoveredItem(item)}/>
           </div>
