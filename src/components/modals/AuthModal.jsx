@@ -1,37 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
-import { z } from 'zod'
+import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
-import { useGoogleLogin } from '@react-oauth/google' // 🔥 Импортируем хук Google
-import { login, register as registerUser, loginWithGoogle } from '../../api/authApi' 
+import { useGoogleLogin } from '@react-oauth/google'
+import { X, Camera, User } from 'lucide-react'
 
-
-// Схемы Zod
-const loginSchema = z.object({
-  email: z.string().min(1, 'Введите email или логин'),
-  password: z.string().min(6, 'Пароль должен быть от 6 символов'),
-})
-
-const registerSchema = z.object({
-  email: z.string().email('Некорректный формат Email'),
-  password: z.string().min(6, 'Пароль должен быть от 6 символов'),
-  avatar: z.string().optional(), 
-})
-
-
+import { login, register as registerUser, loginWithGoogle } from '../../api/authApi.js'
+import { loginSchema, registerSchema } from '../../schemas/auth.schema.js'
 
 const AuthModal = ({ isOpen, onClose }) => {
   const router = useRouter()
   const [authMode, setAuthMode] = useState('signin')
   const [serverError, setServerError] = useState('')
+  const [avatarPreview, setAvatarPreview] = useState(null)
   
+  const fileInputRef = useRef(null)
 
-  // Общая функция успеха после любого входа (Form или Google)
+  const currentSchema = authMode === 'signin' ? loginSchema : registerSchema
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    clearErrors,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(currentSchema),
+    mode: 'onChange',
+  })
+
+  // 🟢 Конвертация загруженной картинки в Base64
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // Ограничение 2MB
+        setServerError('Размер фото не должен превышать 2 МБ')
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result
+        setAvatarPreview(base64String)
+        setValue('avatar', base64String) // Записываем строку в react-hook-form
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleAuthSuccess = (data) => {
     const token = data?.token || data?.data?.token
     if (token) {
@@ -43,53 +63,37 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   }
 
-  // Мутация для обычной формы (Email/Password)
   const { mutate, isPending } = useMutation({
-    mutationFn: ({ email, password }) => {
-      return authMode === 'signin' 
-        ? login(email, password) 
-        : registerUser(email, password)
+    mutationFn: ({ email, password, avatar }) => {
+      return authMode === 'signin'
+        ? login(email, password)
+        : registerUser(email, password, avatar)
     },
     onSuccess: handleAuthSuccess,
     onError: (error) => {
       const message = error?.response?.data?.message || 'Произошла ошибка при входе'
       setServerError(message)
-    }
+    },
   })
 
-  // 🔥 Мутация для Google авторизации
   const googleMutation = useMutation({
     mutationFn: (googleToken) => loginWithGoogle(googleToken),
     onSuccess: handleAuthSuccess,
     onError: (error) => {
       const message = error?.response?.data?.message || 'Ошибка авторизации через Google'
       setServerError(message)
-    }
+    },
   })
 
-  // 🔥 Кастомная кнопка Google Login
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: (credentialResponse) => {
-      // access_token от Google отправляем на бэкенд
       if (credentialResponse.access_token) {
         googleMutation.mutate(credentialResponse.access_token)
       }
     },
     onError: () => {
       setServerError('Ошибка подключения к Google')
-    }
-  })
-
-  const currentSchema = authMode === 'signin' ? loginSchema : registerSchema
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(currentSchema),
-    mode: 'onChange',
+    },
   })
 
   if (!isOpen) return null
@@ -97,23 +101,24 @@ const AuthModal = ({ isOpen, onClose }) => {
   const handleTabChange = (mode) => {
     setAuthMode(mode)
     setServerError('')
+    setAvatarPreview(null)
+    clearErrors()
     reset()
   }
 
   const onSubmit = (data) => {
     setServerError('')
-    mutate({ email: data.email, password: data.password, avatar: data.avatar }) // Передаем avatar при регистрации
+    mutate({ email: data.email, password: data.password, avatar: data.avatar })
   }
 
   const isLoading = isPending || googleMutation.isPending
 
   return (
-    <div 
+    <div
       onClick={(e) => e.target === e.currentTarget && onClose()}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6 backdrop-blur-sm animate-in fade-in duration-200 text-black"
     >
       <div className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl ring-1 ring-black/5">
-        
         {/* Шапка */}
         <div className="flex items-start justify-between border-b border-gray-200 px-6 py-5">
           <div>
@@ -140,9 +145,9 @@ const AuthModal = ({ isOpen, onClose }) => {
           </button>
           <button
             type="button"
-            onClick={() => handleTabChange('login')}
+            onClick={() => handleTabChange('register')}
             className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
-              authMode === 'login' ? 'bg-[#FF385C] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              authMode === 'register' ? 'bg-[#FF385C] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Register
@@ -151,10 +156,40 @@ const AuthModal = ({ isOpen, onClose }) => {
 
         {/* Форма */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-6 py-6">
-          
           {serverError && (
             <div className="p-3 text-xs text-center font-medium text-red-600 bg-red-50 rounded-xl border border-red-200">
               {serverError}
+            </div>
+          )}
+
+          {/* 🟢 Блок загрузки аватара (только для регистрации) */}
+          {authMode === 'register' && (
+            <div className="flex flex-col items-center justify-center mb-4">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="relative cursor-pointer group flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 border-2 border-dashed border-gray-300 hover:border-[#FF385C] overflow-hidden transition-all"
+              >
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar Preview" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-8 w-8 text-gray-400 group-hover:text-[#FF385C] transition-colors" />
+                )}
+
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="h-5 w-5 text-white" />
+                </div>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+              <span className="mt-1 text-xs text-gray-500">
+                {avatarPreview ? 'Нажмите, чтобы изменить' : 'Загрузить аватар (опционально)'}
+              </span>
             </div>
           )}
 
@@ -191,16 +226,18 @@ const AuthModal = ({ isOpen, onClose }) => {
             />
             {errors.password && (
               <p className="mt-1.5 text-xs font-medium text-red-500">
-                {errors.password.message }
+                {errors.password.message}
               </p>
             )}
           </div>
 
-          <div className="flex justify-end">
-            <button type="button" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
-              Forgot password?
-            </button>
-          </div>
+          {authMode === 'signin' && (
+            <div className="flex justify-end">
+              <button type="button" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
+                Forgot password?
+              </button>
+            </div>
+          )}
 
           {/* Кнопка отправки формы */}
           <button
@@ -217,7 +254,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             <span className="absolute bg-white px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
           </div>
 
-          {/* 🔥 Красивая кнопка Google */}
+          {/* Кнопка Google */}
           <button
             type="button"
             onClick={() => handleGoogleLogin()}
@@ -244,9 +281,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             </svg>
             Continue with Google
           </button>
-
         </form>
-
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ const CardSection = () => {
   isError: isApartmentsError 
 } = useAllAccommodations({ category: 'apartment', rate: '4.0' })
 
+console.log(apartments);
   const { 
   data: hotels = [], 
   isLoading: isHotelsLoading, 

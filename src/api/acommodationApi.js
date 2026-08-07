@@ -4,7 +4,12 @@ import { api } from "./api";
 export const getAccommodations = async (params = {}) => {
   try {
     const response = await api.get("/accommodations", { params });
-    return response.data;
+    
+    // 🟢 Если бэкенд возвращает { items: [...] } или { data: [...] }
+    const accommodations = response.data?.items || response.data?.data || response.data;
+
+    // Гарантируем, что ВСЕГДА вернется массив
+    return Array.isArray(accommodations) ? accommodations : [];
   } catch (error) {
     console.error("Ошибка при получении размещений:", error);
     throw error;

@@ -48,7 +48,7 @@ const ApartmentsDetailPage = () => {
         <HeaderLg />
       </div>
 
-      <main className="pt-24 md:pt-32 pb-10">
+      <main className="pt-24 md:pt-16 pb-10">
         <div className="w-[94%] max-w-[1850px] mx-auto px-2 sm:px-4">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
