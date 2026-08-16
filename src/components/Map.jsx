@@ -4,12 +4,10 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 
-// Компонент-помощник для плавного перелета карты (flyTo)
 function MapFlyTo({ hoveredItem }) {
   const map = useMap();
 
   useEffect(() => {
-    // В базе данные могут называться lat/lng или latitude/longitude
     const lat = hoveredItem?.lat ?? hoveredItem?.latitude;
     const lng = hoveredItem?.lng ?? hoveredItem?.longitude;
 
@@ -24,20 +22,35 @@ function MapFlyTo({ hoveredItem }) {
   return null;
 }
 
-export default function Map({ items = [], hoveredItem, onSelect }) {
+export default function Map({ items = [], hoveredItem, onSelect, isDetailView = false }) {
   const [isMounted, setIsMounted] = useState(false);
 
-  // Ждем монтирования в браузере
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   if (!isMounted) return null;
 
-  // Функция для создания HTML-плашки с ценой
+  // 🟢 Иконка дома для детальной страницы
+  const createHomeIcon = () => {
+    return L.divIcon({
+      className: "custom-home-marker-wrapper",
+      html: `
+        <div class="flex items-center justify-center w-12 h-12 rounded-full bg-gray-900 text-white shadow-xl border-2 border-white transform transition-transform hover:scale-110">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1">
+            <path d="M10.707 2.293a1 1 0 0 1 1.414 0l9 9a1 1 0 0 1-1.414 1.414L20 12.086V20a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-4h-2v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7.914l-.707.707a1 1 0 0 1-1.414-1.414l9-9z"/>
+          </svg>
+        </div>
+      `,
+      iconSize: [48, 48],
+      iconAnchor: [24, 24],
+    });
+  };
+
+  // 🟢 Обычная иконка с ценой для главной страницы
   const createPriceIcon = (price, isSelected) => {
     return L.divIcon({
-      className: "custom-price-marker-wrapper", // чистим дефолтные стили leaflet
+      className: "custom-price-marker-wrapper",
       html: `
         <div class="px-2.5 py-1 rounded-full font-bold text-xs sm:text-sm shadow-md transition-all duration-200 cursor-pointer whitespace-nowrap border ${
           isSelected
@@ -52,15 +65,15 @@ export default function Map({ items = [], hoveredItem, onSelect }) {
     });
   };
 
-  // Координаты центра Баку по умолчанию
-  const defaultCenter = [40.3783, 49.8392];
+  const defaultLat = hoveredItem?.lat ?? hoveredItem?.latitude ?? 40.3783;
+  const defaultLng = hoveredItem?.lng ?? hoveredItem?.longitude ?? 49.8392;
 
   return (
-    <div className="w-full h-full min-h-[400px] rounded-3xl overflow-hidden shadow-sm border border-gray-200 relative z-0">
+    <div className="w-full h-full relative z-0">
       <MapContainer
-        center={defaultCenter}
-        zoom={12}
-        scrollWheelZoom={true}
+        center={[defaultLat, defaultLng]}
+        zoom={isDetailView ? 14 : 12}
+        scrollWheelZoom={false}
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
@@ -68,10 +81,8 @@ export default function Map({ items = [], hoveredItem, onSelect }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Плавный перелет к выбранному объекту */}
         <MapFlyTo hoveredItem={hoveredItem} />
 
-        {/* Отрисовка маркеров с ценами */}
         {items.map((item) => {
           const lat = item.lat ?? item.latitude;
           const lng = item.lng ?? item.longitude;
@@ -84,7 +95,7 @@ export default function Map({ items = [], hoveredItem, onSelect }) {
             <Marker
               key={item.id}
               position={[lat, lng]}
-              icon={createPriceIcon(item.price, isSelected)}
+              icon={isDetailView ? createHomeIcon() : createPriceIcon(item.price, isSelected)}
               eventHandlers={{
                 click: () => onSelect?.(item),
               }}

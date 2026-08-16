@@ -1,10 +1,13 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Heart, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from "next/image"
+import { useUserStore } from '../../store/useUserStore.js' // Достаем текущего юзера
+import { useAddFavorite, useFavorites, useRemoveFavorite } from '../../hooks/useFavorites.js'
 
+const getItemId = (item) => item?.id || item?._id || item?.accommodationId || item?.accommodation?.id || item?.accommodation?._id
 
 const Card = ({ data = {} }) => {
   const { 
@@ -14,21 +17,72 @@ const Card = ({ data = {} }) => {
     price = "0", 
     period = "/ ночь", 
     rate = "5.0", 
-    imageUrl 
+    imageUrl,
+    isFavorite = false // Если бэкенд сразу присылает статус лайка
   } = data
 
   const router = useRouter()
-  const [isLiked, setIsLiked] = useState(false)
+  const user = useUserStore((state) => state.user)
+  const accommodationId = id || _id
+  const userId = user?.id || user?._id
+
+  const { data: favorites = [] } = useFavorites(userId)
+
+  const isPersistedFavorite = useMemo(() => {
+    if (!accommodationId || !Array.isArray(favorites)) return false
+
+    return favorites.some((favoriteItem) => String(getItemId(favoriteItem)) === String(accommodationId))
+  }, [favorites, accommodationId])
+
+  // Стейт лайка: синхронизируется с бэкендом (favorites)
+  const [isLiked, setIsLiked] = useState(isFavorite || isPersistedFavorite)
+
+  useEffect(() => {
+    setIsLiked(Boolean(isFavorite || isPersistedFavorite))
+  }, [isFavorite, isPersistedFavorite])
+
+  // Мутации для добавления/удаления
+  const addFavoriteMutation = useAddFavorite()
+  const removeFavoriteMutation = useRemoveFavorite()
 
   const handleCardClick = () => {
-    const itemId = id || _id
+    if (accommodationId) {
+      router.push(`/apartmentsDetail?id=${accommodationId}`)
+      return
+    }
+    router.push('/apartmentsDetail')
+  }
 
-    if (itemId) {
-      router.push(`/apartmentsDetail?id=${itemId}`)
+  // Обработчик лайка
+  const handleLikeToggle = (e) => {
+    e.stopPropagation() // Предотвращаем переход на страницу карточки
+
+    if (!user) {
+      alert("Пожалуйста, войдите в систему, чтобы добавлять в избранное")
       return
     }
 
-    router.push('/apartmentsDetail')
+    // Оптимистично меняем UI
+    const nextLikedState = !isLiked
+    setIsLiked(nextLikedState)
+
+    if (nextLikedState) {
+      // Добавляем в избранное
+      addFavoriteMutation.mutate(
+        { userId, accommodationId },
+        {
+          onError: () => setIsLiked(false) // Откатываем UI при ошибке
+        }
+      )
+    } else {
+      // Удаляем из избранного
+      removeFavoriteMutation.mutate(
+        { userId, accommodationId },
+        {
+          onError: () => setIsLiked(true) // Откатываем UI при ошибке
+        }
+      )
+    }
   }
 
   return (
@@ -62,10 +116,7 @@ const Card = ({ data = {} }) => {
 
         {/* Кнопка Лайка (Сердечко) */}
         <button 
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsLiked(!isLiked)
-          }}
+          onClick={handleLikeToggle}
           className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-5"
           aria-label="В избранное"
         >

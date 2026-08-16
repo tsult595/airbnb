@@ -7,11 +7,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useGoogleLogin } from '@react-oauth/google'
 import { X, Camera, User } from 'lucide-react'
+import { useUserStore } from '../../store/useUserStore.js'
 
 import { login, register as registerUser, loginWithGoogle } from '../../api/authApi.js'
 import { loginSchema, registerSchema } from '../../schemas/auth.schema.js'
-
 const AuthModal = ({ isOpen, onClose }) => {
+  const setUser = useUserStore((state) => state.setUser)
   const router = useRouter()
   const [authMode, setAuthMode] = useState('signin')
   const [serverError, setServerError] = useState('')
@@ -52,10 +53,18 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   }
 
-  const handleAuthSuccess = (data) => {
+ const handleAuthSuccess = (data) => {
     const token = data?.token || data?.data?.token
+    const user = data?.user || data?.data?.user
+
     if (token) {
       localStorage.setItem('token', token)
+      
+      // 🟢 Записываем юзера в Zustand store!
+      if (user) {
+        setUser(user)
+      }
+
       onClose()
       router.push('/')
     } else {

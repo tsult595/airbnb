@@ -5,20 +5,24 @@ import Image from "next/image"
 import logo from '../../assets/airbnb.png'
 import { Globe, Menu, Search } from "lucide-react"
 import AuthModal from '../modals/AuthModal'
+import AvatarModal from '../modals/AvatarModal'
 import { useSearchStore } from '../../store/useSearchStore'
-
+import Link from 'next/link'
 // Импорты для календаря
 import { Calendar } from "../ui/chadcn/calendar"
 import { format } from "date-fns"
 import { ru } from "date-fns/locale"
+import { useUserStore } from '../../store/useUserStore.js'
 
 const HeaderLg = () => {
   const { activeTab, setActiveTab, dateRange, setDateRange } = useSearchStore()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false)
   // Состояния для календаря
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const calendarRef = useRef(null)
+  const user = useUserStore((state) => state.user)
 
   // Закрытие календаря при клике снаружи
   useEffect(() => {
@@ -76,13 +80,15 @@ const HeaderLg = () => {
         >
           {/* 1. Логотип */}
           <div className="flex-1 flex justify-start shrink-0">
-            <Image 
-              src={logo} 
-              alt="Airbnb" 
-              width={102} 
-              height={32} 
+            <Link href="/">
+              <Image 
+                src={logo} 
+                alt="Airbnb" 
+                width={102} 
+                height={32} 
               className="object-contain cursor-pointer" 
             />
+            </Link>
           </div>
 
           {/* 2. ТАБЫ КАТЕГОРИЙ (показываются когда НЕ скроллим) */}
@@ -170,9 +176,32 @@ const HeaderLg = () => {
 
           {/* 4. Кнопки справа */}
           <div className="flex-1 flex justify-end items-center gap-2 shrink-0">
-            <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700">
-              <Globe className="w-5 h-5" />
-            </button>
+            {user ? (
+          <button
+            type="button"
+            onClick={() => setIsAvatarModalOpen(true)}
+            className="relative h-9 w-9 overflow-hidden rounded-full border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-all"
+          >
+            {user.avatar ? (
+              <Image 
+                src={user.avatar} 
+                alt={user.name || "User Avatar"} 
+                className="h-full w-full object-cover"
+                width={102} 
+                height={32} 
+              />
+            ) : (
+              // Заглушка, если аватарки у залогиненного юзера нет
+              <div className="flex h-full w-full items-center justify-center bg-gray-900 text-xs font-semibold text-white">
+                {user.email?.[0]?.toUpperCase() || 'U'}
+              </div>
+            )}
+          </button>
+        ) : (
+          <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700">
+            <Globe className="w-5 h-5" />
+          </button>
+        )}
             <button
               type="button"
               onClick={() => setIsAuthModalOpen(true)}
@@ -255,6 +284,11 @@ const HeaderLg = () => {
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
+      />
+
+      <AvatarModal
+        isOpen={isAvatarModalOpen}
+        onClose={() => setIsAvatarModalOpen(false)}
       />
     </>
   )

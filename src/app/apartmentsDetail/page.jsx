@@ -2,11 +2,15 @@
 
 import AllRecommendationsHeaderSm from '../../components/AllRecommendationsHeaderSm'
 import HeaderLg from '../../components/mainPage/HeaderLg'
-import { ArrowLeft, Share2, Heart, Grid3X3 } from 'lucide-react'
+import { ArrowLeft, Share2, Heart} from 'lucide-react'
 import Link from 'next/link'
 import Image from "next/image"
 import { useSearchParams } from 'next/navigation'
 import { useAccommodationById } from '../../hooks/useAccommodationsQuery.js'
+import BookingSearchCard from '../../components/detailsPage/BookingSearchCard.jsx'
+import CommentSection from '../../components/detailsPage/CommentSection.jsx'
+import LocationSection from '../../components/detailsPage/LocationSection.jsx'
+import DescriptionComponent from '../../components/detailsPage/DescriptionComponent.jsx'
 
 const ApartmentsDetailPage = () => {
   const searchParams = useSearchParams() 
@@ -49,7 +53,7 @@ const ApartmentsDetailPage = () => {
       </div>
 
       <main className="pt-24 md:pt-16 pb-10">
-        <div className="w-[94%] max-w-[1850px] mx-auto px-2 sm:px-4">
+        <div className="w-[80%] max-w-[1850px] mx-auto px-2 sm:px-4">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -116,57 +120,11 @@ const ApartmentsDetailPage = () => {
             </section>
 
             <section className="grid gap-6 lg:grid-cols-[1fr_420px] items-start">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900">
-                  Жилье целиком, Баку, Азербайджан
-                </h2>
-                <p className="mt-2 text-base sm:text-lg text-gray-700">
-                  4 гостя · 1 спальня · 2 кровати · 1 ванная
-                </p>
-
-                <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p className="text-sm font-medium text-gray-500">Удобства</p>
-                    <p className="mt-2 text-base font-semibold text-gray-900">Wi-Fi, кондиционер, кухня, стиральная машина</p>
-                  </div>
-                  <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p className="text-sm font-medium text-gray-500">Проверка</p>
-                    <p className="mt-2 text-base font-semibold text-gray-900">Мгновенное бронирование и гибкая отмена</p>
-                  </div>
-                </div>
-              </div>
-
-              <aside className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Цена за ночь</p>
-                    <p className="text-3xl font-semibold text-gray-900 mt-1">${apartment.price || 129}</p>
-                  </div>
-                  <div className="rounded-full bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
-                    В цену входят все сборы
-                  </div>
-                </div>
-
-                <button className="mt-6 w-full rounded-2xl bg-black px-4 py-3 text-base font-semibold text-white hover:bg-gray-800 transition-colors">
-                  Забронировать
-                </button>
-
-                <div className="mt-5 space-y-3 text-sm text-gray-600">
-                  <div className="flex items-center justify-between">
-                    <span>4 ночи</span>
-                    <span>$516</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Сервисный сбор</span>
-                    <span>$42</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-gray-200 pt-3 font-semibold text-gray-900">
-                    <span>Итого</span>
-                    <span>$558</span>
-                  </div>
-                </div>
-              </aside>
+            <DescriptionComponent />
+             <BookingSearchCard />
             </section>
+            <CommentSection />
+            <LocationSection accommodation={apartment} />
           </div>
         </div>
       </main>
