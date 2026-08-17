@@ -5,10 +5,26 @@ export const useUserStore = create(
   persist(
     (set) => ({
       user: null,
+      // 🟢 Добавляем массив ID избранного
+      favoriteIds: [], 
+
       setUser: (user) => set({ user }),
-      logout: () => set({ user: null }),
-      
-      // 🟢 Добавляем флаг гидратации
+
+      // 🟢 Методы для управления избранным в Zustand
+      setFavoriteIds: (ids) => set({ favoriteIds: ids.map(String) }),
+
+      addFavoriteId: (id) =>
+        set((state) => ({
+          favoriteIds: [...state.favoriteIds, String(id)],
+        })),
+
+      removeFavoriteId: (id) =>
+        set((state) => ({
+          favoriteIds: state.favoriteIds.filter((favId) => favId !== String(id)),
+        })),
+
+      logout: () => set({ user: null, favoriteIds: [] }),
+
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),

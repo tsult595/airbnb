@@ -16,7 +16,7 @@ export const useAllAccommodations = (params = {}) => {
     // Ждем гидратации Zustand (работает и для авторизованных, и для гостей)
     enabled: hasHydrated !== false, 
     
-    staleTime: 0,
+    staleTime: 1000 * 60,
     refetchOnWindowFocus: false,
   })
 }
@@ -31,7 +31,7 @@ export const useAccommodationById = (id) => {
     queryKey: ['accommodation', String(id), userId],
     queryFn: () => getAccommodationById(id, userId),
     enabled: Boolean(id) && hasHydrated !== false,
-    staleTime: 0,
+    staleTime: 1000 * 60,
     refetchOnWindowFocus: false,
   })
 }

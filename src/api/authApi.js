@@ -20,6 +20,17 @@ export const register = async (email, password, avatar = null) => {
   }
 };
 
+
+export const logout = async () => {
+  try {
+    const response = await api.post("/auth/logout");
+    return response.data; // Возвращает { message: "Logged out successfully" }
+  } catch (error) {
+    console.error("Ошибка при логауте:", error);
+    throw error;
+  }
+};
+
 export const loginWithGoogle = async (googleToken) => {
   const response = await api.post('/auth/google', { token: googleToken }); 
   return response.data;

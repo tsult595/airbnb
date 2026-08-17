@@ -1,104 +1,63 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
 import { Heart, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from "next/image"
-import { useUserStore } from '../../store/useUserStore.js' // Достаем текущего юзера
-import { useAddFavorite, useFavorites, useRemoveFavorite } from '../../hooks/useFavorites.js'
-
-const getItemId = (item) => item?.id || item?._id || item?.accommodationId || item?.accommodation?.id || item?.accommodation?._id
+import { useUserStore } from '../../store/useUserStore.js'
+import { useAddFavorite, useRemoveFavorite } from '../../hooks/useFavorites.js'
 
 const Card = ({ data = {} }) => {
   const { 
-    id,
-    _id,
+    id, 
+    _id, 
     title = "Без названия", 
     price = "0", 
     period = "/ ночь", 
     rate = "5.0", 
     imageUrl,
-    isFavorite = false // Если бэкенд сразу присылает статус лайка
+    isFavorite: backendIsFavorite = false 
   } = data
 
   const router = useRouter()
   const user = useUserStore((state) => state.user)
+  const favoriteIds = useUserStore((state) => state.favoriteIds) // 🟢 Массив всех ID из Zustand
+  
   const accommodationId = id || _id
   const userId = user?.id || user?._id
 
-  const { data: favorites = [] } = useFavorites(userId)
+  // 🟢 Карточка краснеет, если ID есть в Zustand ИЛИ бэкенд прямо сейчас считает её избранной
+  const isFavorite = favoriteIds.includes(String(accommodationId)) || backendIsFavorite
 
-  const isPersistedFavorite = useMemo(() => {
-    if (!accommodationId || !Array.isArray(favorites)) return false
-
-    return favorites.some((favoriteItem) => String(getItemId(favoriteItem)) === String(accommodationId))
-  }, [favorites, accommodationId])
-
-  // Стейт лайка: синхронизируется с бэкендом (favorites)
-  const [isLiked, setIsLiked] = useState(isFavorite || isPersistedFavorite)
-
-  useEffect(() => {
-    setIsLiked(Boolean(isFavorite || isPersistedFavorite))
-  }, [isFavorite, isPersistedFavorite])
-
-  // Мутации для добавления/удаления
   const addFavoriteMutation = useAddFavorite()
   const removeFavoriteMutation = useRemoveFavorite()
 
-  const handleCardClick = () => {
-    if (accommodationId) {
-      router.push(`/apartmentsDetail?id=${accommodationId}`)
-      return
-    }
-    router.push('/apartmentsDetail')
-  }
-
-  // Обработчик лайка
   const handleLikeToggle = (e) => {
-    e.stopPropagation() // Предотвращаем переход на страницу карточки
+    e.stopPropagation()
 
     if (!user) {
       alert("Пожалуйста, войдите в систему, чтобы добавлять в избранное")
       return
     }
 
-    // Оптимистично меняем UI
-    const nextLikedState = !isLiked
-    setIsLiked(nextLikedState)
+    const payload = { userId, accommodationId }
 
-    if (nextLikedState) {
-      // Добавляем в избранное
-      addFavoriteMutation.mutate(
-        { userId, accommodationId },
-        {
-          onError: () => setIsLiked(false) // Откатываем UI при ошибке
-        }
-      )
+    if (isFavorite) {
+      removeFavoriteMutation.mutate(payload)
     } else {
-      // Удаляем из избранного
-      removeFavoriteMutation.mutate(
-        { userId, accommodationId },
-        {
-          onError: () => setIsLiked(true) // Откатываем UI при ошибке
-        }
-      )
+      addFavoriteMutation.mutate(payload)
+    }
+  }
+
+  const handleCardClick = () => {
+    if (accommodationId) {
+      router.push(`/apartmentsDetail?id=${accommodationId}`)
+    } else {
+      router.push('/apartmentsDetail')
     }
   }
 
   return (
-    <div
-      className="w-full flex flex-col gap-2 cursor-pointer group"
-      onClick={handleCardClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          handleCardClick()
-        }
-      }}
-    >
-      {/* Контейнер картинки */}
+    <div className="w-full flex flex-col gap-2 cursor-pointer group" onClick={handleCardClick}>
       <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100">
         {imageUrl ? (
           <Image
@@ -114,15 +73,14 @@ const Card = ({ data = {} }) => {
           </div>
         )}
 
-        {/* Кнопка Лайка (Сердечко) */}
         <button 
           onClick={handleLikeToggle}
-          className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-5"
+          className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-10"
           aria-label="В избранное"
         >
           <Heart 
             className={`w-6 h-6 stroke-[2] transition-colors duration-200 ${
-              isLiked 
+              isFavorite 
                 ? 'fill-red-500 stroke-red-500' 
                 : 'fill-black/30 stroke-white'
             }`} 
@@ -130,7 +88,6 @@ const Card = ({ data = {} }) => {
         </button>
       </div>
 
-      {/* Текстовый блок */}
       <div className="flex flex-col gap-0.5 px-0.5">
         <h3 className="font-semibold text-gray-900 text-base sm:text-lg leading-snug truncate">
           {title}
