@@ -44,7 +44,7 @@ const AvatarModal = ({ isOpen, onClose }) => {
               Messages
             </button>
           </Link>
-          <Link href="/profile" className="w-full" onClick={onClose}>
+          <Link href="/userProfile" className="w-full" onClick={onClose}>
             <button className="w-full text-left py-1 text-sm font-medium text-gray-700 hover:text-black">
               Profile
             </button>

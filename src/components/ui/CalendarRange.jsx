@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { addDays } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
+import { Calendar } from "./chadcn/calendar"
 
 export function CalendarRange() {
   const [dateRange, setDateRange] = React.useState({

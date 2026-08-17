@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from "react"
 import { ChevronDown } from "lucide-react"
-import { DayPicker } from "react-day-picker"
 import { format, startOfToday } from "date-fns"
 import { ru } from "date-fns/locale"
+import { Calendar } from "../ui/chadcn/calendar"
 
 const BookingSearchCard = ({ pricePerNight }) => {
   // Стейты
@@ -124,7 +124,7 @@ const BookingSearchCard = ({ pricePerNight }) => {
 
             {/* КАЛЕНДАРЬ */}
             <div className="flex justify-center custom-calendar-style">
-              <DayPicker
+              <Calendar
                 mode="range"
                 selected={range}
                 onSelect={setRange}
