@@ -6,8 +6,6 @@ import { DayPicker } from "react-day-picker"
 import { format, startOfToday } from "date-fns"
 import { ru } from "date-fns/locale"
 
-import "react-day-picker/dist/style.css"
-
 const BookingSearchCard = ({ pricePerNight }) => {
   // Стейты
   const [range, setRange] = useState({ from: undefined, to: undefined })
@@ -19,15 +17,17 @@ const BookingSearchCard = ({ pricePerNight }) => {
 
   // Закрытие выпадашек при клике вне карточки
   useEffect(() => {
+    if (!isCalendarOpen && !guestsOpen) return
+
     const handleClickOutside = (event) => {
       if (cardRef.current && !cardRef.current.contains(event.target)) {
         setIsCalendarOpen(false)
         setGuestsOpen(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+    document.addEventListener("pointerdown", handleClickOutside)
+    return () => document.removeEventListener("pointerdown", handleClickOutside)
+  }, [isCalendarOpen, guestsOpen])
 
   // Форматирование дат для отображения
   const checkInText = range?.from ? format(range.from, "dd.MM.yyyy") : "Укажите дату"

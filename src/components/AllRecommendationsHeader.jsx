@@ -20,6 +20,7 @@ const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
   const calendarRef = useRef(null)
+  const calendarTriggerRef = useRef(null)
 
   const filterChips = [
     { label: 'Самостоятельное прибытие' },
@@ -36,21 +37,23 @@ const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
 
   // Закрываем календарь при клике вне него
   useEffect(() => {
+    if (!isCalendarOpen) return
+
     const handleClickOutside = (event) => {
-      if (
-        calendarRef.current &&
-        !calendarRef.current.contains(event.target)
-      ) {
+      const clickedCalendar = calendarRef.current?.contains(event.target)
+      const clickedTrigger = calendarTriggerRef.current?.contains(event.target)
+
+      if (!clickedCalendar && !clickedTrigger) {
         setIsCalendarOpen(false)
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("pointerdown", handleClickOutside)
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("pointerdown", handleClickOutside)
     }
-  }, [])
+  }, [isCalendarOpen])
 
   // Форматирование даты
   const getFormattedDate = () => {
@@ -110,6 +113,7 @@ const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
 
               {/* WHEN */}
               <div
+                ref={calendarTriggerRef}
                 onClick={() => setIsCalendarOpen((prev) => !prev)}
                 className={`flex-1 px-6 py-1 rounded-full transition-colors cursor-pointer ${
                   isCalendarOpen

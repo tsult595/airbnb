@@ -88,7 +88,7 @@ const Card = ({ data = {} }) => {
           onClick={handleLikeToggle}
           type="button"
           disabled={!accommodationId || addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
-          className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-10"
+          className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-5"
           aria-label={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
           aria-pressed={isFavorite}
         >

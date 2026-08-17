@@ -177,31 +177,31 @@ const HeaderLg = () => {
           {/* 4. Кнопки справа */}
           <div className="flex-1 flex justify-end items-center gap-2 shrink-0">
             {user ? (
-          <button
-            type="button"
-            onClick={() => setIsAvatarModalOpen(true)}
-            className="relative h-9 w-9 overflow-hidden rounded-full border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-all"
-          >
-            {user.avatar ? (
-              <Image 
-                src={user.avatar} 
-                alt={user.name || "User Avatar"} 
-                className="h-full w-full object-cover"
-                width={102} 
-                height={32} 
-              />
+              <button
+                type="button"
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="relative h-9 w-9 overflow-hidden rounded-full border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-all"
+                aria-label="Открыть меню профиля"
+              >
+                {user.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt={user.name || "Аватар пользователя"}
+                    className="h-full w-full object-cover"
+                    width={36}
+                    height={36}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gray-900 text-xs font-semibold text-white">
+                    {user.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
+              </button>
             ) : (
-              // Заглушка, если аватарки у залогиненного юзера нет
-              <div className="flex h-full w-full items-center justify-center bg-gray-900 text-xs font-semibold text-white">
-                {user.email?.[0]?.toUpperCase() || 'U'}
-              </div>
+              <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700">
+                <Globe className="w-5 h-5" />
+              </button>
             )}
-          </button>
-        ) : (
-          <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700">
-            <Globe className="w-5 h-5" />
-          </button>
-        )}
             <button
               type="button"
               onClick={() => setIsAuthModalOpen(true)}
