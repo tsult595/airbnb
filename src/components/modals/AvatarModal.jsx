@@ -11,7 +11,7 @@ const AvatarModal = ({ isOpen, onClose }) => {
   const { mutate: handleLogout, isPending } = useLogout({
     onSuccess: () => {
       onClose() // Закрываем модальное окно
-      router.push('/login')
+      router.push('/')
     },
     onError: () => {
       onClose() // Закрываем модалку даже при ошибке (клиентский стейт всё равно сбросился)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { useSearchStore } from '../../store/useSearchStore.js'
 import { useAllAccommodations } from '../../hooks/useAccommodationsQuery'
+import { getAccommodationItems, getAccommodationTotalPages } from '../../api/acommodationApi'
 import AllRecommendationsHeader from '../../components/AllRecommendationsHeader.jsx'
 import AllRecommendationsHeaderSm from '../../components/AllRecommendationsHeaderSm.jsx'
 import CardWithArrow from '../../components/ui/CardWithArrow.jsx'
@@ -22,7 +23,7 @@ const Map = dynamic(() => import('../../components/Map.jsx'), {
   ),
 })
 
-export default function AllRecommendationsPage() {
+function AllRecommendationsContent() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -33,8 +34,8 @@ export default function AllRecommendationsPage() {
   const rawCategory = searchParams.get('category') || 'all'
   const minRate = searchParams.get('rate')
   const city = searchParams.get('city') || undefined
-  const currentPage = Number(searchParams.get('page')) || 1
-  const limit = Number(searchParams.get('limit')) || 5
+  const currentPage = Math.max(1, Number(searchParams.get('page')) || 1)
+  const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit')) || 5))
 
   // 🟢 Получаем выбранные чипсы из URL
   const chipsFromUrl = searchParams.get('chips') 
@@ -105,8 +106,8 @@ export default function AllRecommendationsPage() {
   const { data, isLoading, isError } = useAllAccommodations(queryParams)
 
   // 6. Достаем элементы и общее кол-во страниц из ответа API
-  const accommodations = data?.items || (Array.isArray(data) ? data : [])
-  const totalPages = data?.totalPages || 1
+  const accommodations = getAccommodationItems(data)
+  const totalPages = getAccommodationTotalPages(data)
 
   const handlePageChange = (newPage) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -167,7 +168,7 @@ export default function AllRecommendationsPage() {
               )}
 
               {isError && (
-                <div className="text-center py-12 text-red-500 font-medium">
+                <div className="text-center py-12 text-red-500 font-medium" role="alert">
                   Произошла ошибка при загрузке данных. Попробуйте обновить страницу.
                 </div>
               )}
@@ -215,5 +216,13 @@ export default function AllRecommendationsPage() {
 
       </div>
     </>
+  )
+}
+
+export default function AllRecommendationsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <AllRecommendationsContent />
+    </Suspense>
   )
 }

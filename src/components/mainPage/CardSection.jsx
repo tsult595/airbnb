@@ -5,6 +5,7 @@ import Card from "../ui/Card"
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAllAccommodations } from "../../hooks/useAccommodationsQuery"
+import { getAccommodationItems } from "../../api/acommodationApi"
 import SeeAllCard from "../../components/SeeAllCard.jsx"
 
 const CardSection = () => {
@@ -12,14 +13,13 @@ const CardSection = () => {
 
   // 1. Делаем два независимых запроса напрямую к PostgreSQL (через индексы)
  const { 
-  data: apartments = [], 
+  data: apartmentsData,
   isLoading: isApartmentsLoading, 
   isError: isApartmentsError 
 } = useAllAccommodations({ category: 'apartment', rate: '4.0' })
 
-console.log(apartments);
   const { 
-  data: hotels = [], 
+  data: hotelsData,
   isLoading: isHotelsLoading, 
   isError: isHotelsError 
 } = useAllAccommodations({ category: 'hotel', rate: '4.0' })
@@ -33,10 +33,14 @@ console.log(apartments);
 }
 
   const { 
-  data: tbilisiApartments = [], 
+  data: tbilisiApartmentsData,
   isLoading: isTbilisiLoading, 
   isError: isTbilisiError 
 } = useAllAccommodations({ city: 'Tbilisi' })
+
+  const apartments = getAccommodationItems(apartmentsData)
+  const hotels = getAccommodationItems(hotelsData)
+  const tbilisiApartments = getAccommodationItems(tbilisiApartmentsData)
 
 
 

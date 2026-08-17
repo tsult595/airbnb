@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 
@@ -11,7 +11,7 @@ function MapFlyTo({ hoveredItem }) {
     const lat = hoveredItem?.lat ?? hoveredItem?.latitude;
     const lng = hoveredItem?.lng ?? hoveredItem?.longitude;
 
-    if (lat && lng) {
+    if (Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
       map.flyTo([lat, lng], 14, {
         duration: 1.2,
         easeLinearity: 0.25,
@@ -23,13 +23,6 @@ function MapFlyTo({ hoveredItem }) {
 }
 
 export default function Map({ items = [], hoveredItem, onSelect, isDetailView = false }) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return null;
 
   // 🟢 Иконка дома для детальной страницы
   const createHomeIcon = () => {
@@ -87,7 +80,7 @@ export default function Map({ items = [], hoveredItem, onSelect, isDetailView = 
           const lat = item.lat ?? item.latitude;
           const lng = item.lng ?? item.longitude;
 
-          if (!lat || !lng) return null;
+          if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return null;
 
           const isSelected = hoveredItem?.id === item.id;
 

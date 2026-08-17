@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { ChevronDown, Calendar as CalendarIcon, X } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { DayPicker } from "react-day-picker"
-import { format, isBefore, startOfToday } from "date-fns"
+import { format, startOfToday } from "date-fns"
 import { ru } from "date-fns/locale"
 
 import "react-day-picker/dist/style.css"
 
-const BookingSearchCard = ({ pricePerNight, accommodationId }) => {
+const BookingSearchCard = ({ pricePerNight }) => {
   // Стейты
   const [range, setRange] = useState({ from: undefined, to: undefined })
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)

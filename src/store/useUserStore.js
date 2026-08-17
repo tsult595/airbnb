@@ -15,7 +15,9 @@ export const useUserStore = create(
 
       addFavoriteId: (id) =>
         set((state) => ({
-          favoriteIds: [...state.favoriteIds, String(id)],
+          favoriteIds: state.favoriteIds.includes(String(id))
+            ? state.favoriteIds
+            : [...state.favoriteIds, String(id)],
         })),
 
       removeFavoriteId: (id) =>
@@ -30,6 +32,7 @@ export const useUserStore = create(
     }),
     {
       name: 'user-storage',
+      partialize: ({ user, favoriteIds }) => ({ user, favoriteIds }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       },

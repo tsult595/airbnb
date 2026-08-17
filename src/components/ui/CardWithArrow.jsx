@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Heart, Star, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from "next/image"
 import { useRouter } from 'next/navigation'
+import { useUserStore } from '../../store/useUserStore.js'
+import { useAddFavorite, useRemoveFavorite } from '../../hooks/useFavorites.js'
 
 const CardWithArrow = ({ data = {} }) => {
    const { 
@@ -13,49 +15,67 @@ const CardWithArrow = ({ data = {} }) => {
     price = "0", 
     period = "/ ночь", 
     rate = "5.0", 
-    imageUrl ,
-    images
+    imageUrl,
+    image_url,
+    images,
+    isFavorite: backendIsFavorite = false,
   } = data
 
-  const [isLiked, setIsLiked] = useState(false)
   const [currentImage, setCurrentImage] = useState(0)
-  const router = useRouter() 
+  const router = useRouter()
+  const user = useUserStore((state) => state.user)
+  const favoriteIds = useUserStore((state) => state.favoriteIds)
+  const addFavoriteMutation = useAddFavorite()
+  const removeFavoriteMutation = useRemoveFavorite()
+  const accommodationId = id || _id
+  const userId = user?.id || user?._id
 
   // 1. Извлекаем главный фото-URL (гибко под оба формата названия)
   const mainPhoto = imageUrl || image_url
 
   // 2. Безопасно собираем уникальный массив ссылок
-  const rawList = [
+  const allImages = useMemo(() => Array.from(new Set([
     ...(mainPhoto ? [mainPhoto] : []),
     ...(Array.isArray(images) ? images : [])
-  ].filter(Boolean) // Удаляем null/undefined
-
-  // Убираем дубликаты ссылок через Set
-  const allImages = Array.from(new Set(rawList))
+  ].filter(Boolean))), [images, mainPhoto])
 
   const hasMultipleImages = allImages.length > 1
+  const activeImageIndex = Math.min(currentImage, Math.max(allImages.length - 1, 0))
+  const isFavorite = favoriteIds.includes(String(accommodationId)) || backendIsFavorite
+  const isFavoriteMutationPending = addFavoriteMutation.isPending || removeFavoriteMutation.isPending
 
   // Следующая картинка
   const nextImage = (e) => {
     e.stopPropagation()
-    setCurrentImage((prev) => (prev === allImages.length - 1 ? 0 : prev + 1))
+    setCurrentImage(activeImageIndex === allImages.length - 1 ? 0 : activeImageIndex + 1)
   }
 
   // Предыдущая картинка
   const prevImage = (e) => {
     e.stopPropagation()
-    setCurrentImage((prev) => (prev === 0 ? allImages.length - 1 : prev - 1))
+    setCurrentImage(activeImageIndex === 0 ? allImages.length - 1 : activeImageIndex - 1)
   }
 
     const handleCardClick = () => {
-    const itemId = id || _id
-
-    if (itemId) {
-      router.push(`/apartmentsDetail?id=${itemId}`)
+    if (accommodationId) {
+      router.push(`/apartmentsDetail?id=${accommodationId}`)
       return
     }
 
     router.push('/apartmentsDetail')
+  }
+
+  const handleLikeToggle = (event) => {
+    event.stopPropagation()
+
+    if (!user || !accommodationId) return
+
+    const payload = { userId, accommodationId }
+    if (isFavorite) {
+      removeFavoriteMutation.mutate(payload)
+    } else {
+      addFavoriteMutation.mutate(payload)
+    }
   }
 
   return (
@@ -78,8 +98,8 @@ const CardWithArrow = ({ data = {} }) => {
 
         {allImages.length > 0 ? (
           <Image
-            src={allImages[currentImage]}
-            alt={`${title} - фото ${currentImage + 1}`}
+            src={allImages[activeImageIndex]}
+            alt={`${title} - фото ${activeImageIndex + 1}`}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -95,16 +115,15 @@ const CardWithArrow = ({ data = {} }) => {
         {/* ================================= */}
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsLiked((prev) => !prev)
-          }}
+          onClick={handleLikeToggle}
+          disabled={!user || !accommodationId || isFavoriteMutationPending}
           className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-20"
-          aria-label="В избранное"
+          aria-label={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+          aria-pressed={isFavorite}
         >
           <Heart
             className={`w-6 h-6 stroke-[2] transition-colors duration-200 ${
-              isLiked
+              isFavorite
                 ? 'fill-red-500 stroke-red-500'
                 : 'fill-black/30 stroke-white'
             }`}
@@ -167,7 +186,7 @@ const CardWithArrow = ({ data = {} }) => {
                 className={`
                   rounded-full transition-all duration-200
                   ${
-                    currentImage === index
+                    activeImageIndex === index
                       ? 'w-2 h-2 bg-white'
                       : 'w-1.5 h-1.5 bg-white/60 hover:bg-white/80'
                   }

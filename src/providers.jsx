@@ -8,7 +8,12 @@ export default function ReactQueryProvider({ children }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000, // Данные считаются свежими 1 минуту
+        staleTime: 60 * 1000,
+        refetchOnWindowFocus: false,
+        retry: (failureCount, error) => {
+          const status = error?.response?.status
+          return status !== 401 && status !== 403 && status !== 404 && failureCount < 2
+        },
       },
     },
   }))

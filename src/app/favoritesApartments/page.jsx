@@ -12,7 +12,7 @@ const FavoritesApartments = () => {
   const user = useUserStore((state) => state.user)
   const userId = user?.id || user?._id
 
-  const { data: favorites = [], isLoading, isError } = useFavorites(userId)
+  const { data: favorites = [], isLoading, isError, refetch, isFetching } = useFavorites(userId)
 
   if (!user) {
     return (
@@ -25,7 +25,7 @@ const FavoritesApartments = () => {
           Чтобы просматривать и сохранять понравившиеся варианты жилья, войдите в свою учетную запись.
         </p>
         <button
-          onClick={() => router.push('/login')}
+          onClick={() => router.push('/')}
           className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-colors shadow-sm"
         >
           Войти в аккаунт
@@ -56,10 +56,11 @@ const FavoritesApartments = () => {
       <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4">
         <p className="text-red-500 font-medium mb-4">Не удалось загрузить список избранного</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => refetch()}
+          disabled={isFetching}
           className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
         >
-          Обновить страницу
+          {isFetching ? 'Обновление...' : 'Повторить'}
         </button>
       </div>
     )

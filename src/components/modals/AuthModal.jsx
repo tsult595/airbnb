@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useGoogleLogin } from '@react-oauth/google'
 import { X, Camera, User } from 'lucide-react'
+import Image from 'next/image'
 import { useUserStore } from '../../store/useUserStore.js'
 
 import { login, register as registerUser, loginWithGoogle } from '../../api/authApi.js'
@@ -179,7 +180,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                 className="relative cursor-pointer group flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 border-2 border-dashed border-gray-300 hover:border-[#FF385C] overflow-hidden transition-all"
               >
                 {avatarPreview ? (
-                  <img src={avatarPreview} alt="Avatar Preview" className="h-full w-full object-cover" />
+                  <Image src={avatarPreview} alt="Предпросмотр аватара" fill unoptimized className="object-cover" />
                 ) : (
                   <User className="h-8 w-8 text-gray-400 group-hover:text-[#FF385C] transition-colors" />
                 )}

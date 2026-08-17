@@ -1,30 +1,35 @@
 import { api } from "./api";
 
-// 1. Получение всех размещений с поддержкой фильтров (поиск, даты, гости, категория)
-export const getAccommodations = async (params = {}) => {
-  try {
-    const response = await api.get("/accommodations", { params });
-    
-    // 🟢 Если бэкенд возвращает { items: [...] } или { data: [...] }
-    const accommodations = response.data?.items || response.data?.data || response.data;
+export const getAccommodationItems = (payload) => {
+  if (Array.isArray(payload)) return payload;
 
-    // Гарантируем, что ВСЕГДА вернется массив
-    return Array.isArray(accommodations) ? accommodations : [];
-  } catch (error) {
-    console.error("Ошибка при получении размещений:", error);
-    throw error;
-  }
+  const data = payload?.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.items)) return data.items;
+
+  return [];
+};
+
+export const getAccommodationTotalPages = (payload) => {
+  const totalPages = payload?.totalPages ?? payload?.pagination?.totalPages
+    ?? payload?.data?.totalPages ?? payload?.data?.pagination?.totalPages;
+  const parsedTotalPages = Number(totalPages);
+
+  return Number.isInteger(parsedTotalPages) && parsedTotalPages > 0 ? parsedTotalPages : 1;
+};
+
+// Получение всех размещений с поддержкой фильтров (поиск, даты, гости, категория).
+// Не отбрасываем метаданные ответа: они нужны для пагинации.
+export const getAccommodations = async (params = {}) => {
+  const response = await api.get("/accommodations", { params });
+  return response.data;
 };
 
 // 2. Получение одного размещения по ID
 export const getAccommodationById = async (id) => {
-  try {
-    const response = await api.get(`/accommodations/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Ошибка при получении размещения с ID ${id}:`, error);
-    throw error;
-  }
+  const response = await api.get(`/accommodations/${id}`);
+  return response.data?.data ?? response.data;
 };
 
 // 3. Получение размещений по рейтингу (или минимальному рейтингу)

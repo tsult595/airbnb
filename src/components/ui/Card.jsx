@@ -57,7 +57,18 @@ const Card = ({ data = {} }) => {
   }
 
   return (
-    <div className="w-full flex flex-col gap-2 cursor-pointer group" onClick={handleCardClick}>
+    <div
+      className="w-full flex flex-col gap-2 cursor-pointer group"
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          handleCardClick()
+        }
+      }}
+    >
       <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100">
         {imageUrl ? (
           <Image
@@ -75,8 +86,11 @@ const Card = ({ data = {} }) => {
 
         <button 
           onClick={handleLikeToggle}
+          type="button"
+          disabled={!accommodationId || addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
           className="absolute top-3 right-3 p-1.5 rounded-full transition-transform active:scale-90 focus:outline-none z-10"
-          aria-label="В избранное"
+          aria-label={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+          aria-pressed={isFavorite}
         >
           <Heart 
             className={`w-6 h-6 stroke-[2] transition-colors duration-200 ${
@@ -95,7 +109,7 @@ const Card = ({ data = {} }) => {
 
         <div className="flex items-center justify-between text-sm sm:text-base text-gray-600 font-normal">
           <span>
-            <strong className="font-semibold text-gray-900">${Math.round(Number(price))}</strong> {period}
+            <strong className="font-semibold text-gray-900">${Math.round(Number(price) || 0)}</strong> {period}
           </span>
 
           <div className="flex items-center gap-1 text-gray-800 font-medium">

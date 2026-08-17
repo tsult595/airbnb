@@ -6,13 +6,14 @@ import { ArrowLeft, Share2, Heart} from 'lucide-react'
 import Link from 'next/link'
 import Image from "next/image"
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { useAccommodationById } from '../../hooks/useAccommodationsQuery.js'
 import BookingSearchCard from '../../components/detailsPage/BookingSearchCard.jsx'
 import CommentSection from '../../components/detailsPage/CommentSection.jsx'
 import LocationSection from '../../components/detailsPage/LocationSection.jsx'
 import DescriptionComponent from '../../components/detailsPage/DescriptionComponent.jsx'
 
-const ApartmentsDetailPage = () => {
+const ApartmentsDetailContent = () => {
   const searchParams = useSearchParams() 
   const id = searchParams.get('id')
 
@@ -23,7 +24,7 @@ const ApartmentsDetailPage = () => {
 
   // Обработка загрузки или ошибки
   if (isLoading) return <div className="text-center py-32">Загрузка...</div>
-  if (isError) return <div className="text-center py-32">Ошибка при загрузке данных</div>
+  if (isError) return <div className="text-center py-32" role="alert">Ошибка при загрузке данных</div>
   
   // Если по какой-то причине квартиру не нашли
   if (!apartment) {
@@ -38,7 +39,8 @@ const ApartmentsDetailPage = () => {
   }
 
 
-  const { title, imageUrl, images = [] } = apartment
+  const { title, imageUrl, image_url: imageUrlFromApi, images = [], price } = apartment
+  const mainImage = imageUrl || imageUrlFromApi
 
 
 
@@ -83,9 +85,9 @@ const ApartmentsDetailPage = () => {
 
             <section className="grid grid-cols-1 lg:grid-cols-[1.45fr_1fr] gap-3">
               <div className="relative min-h-[280px] lg:min-h-[470px] rounded-3xl overflow-hidden bg-gray-100">
-                {imageUrl ? (
+                {mainImage ? (
                   <Image
-                    src={imageUrl}
+                    src={mainImage}
                     alt={title || 'Апартаменты'}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 55vw, 40vw"
@@ -120,8 +122,8 @@ const ApartmentsDetailPage = () => {
             </section>
 
             <section className="grid gap-6 lg:grid-cols-[1fr_420px] items-start">
-            <DescriptionComponent />
-             <BookingSearchCard />
+             <DescriptionComponent accommodation={apartment} />
+             <BookingSearchCard pricePerNight={price} />
             </section>
             <CommentSection />
             <LocationSection accommodation={apartment} />
@@ -131,5 +133,11 @@ const ApartmentsDetailPage = () => {
     </>
   )
 }
+
+const ApartmentsDetailPage = () => (
+  <Suspense fallback={<div className="min-h-screen bg-white" />}>
+    <ApartmentsDetailContent />
+  </Suspense>
+)
 
 export default ApartmentsDetailPage

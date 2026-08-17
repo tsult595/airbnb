@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { getAccommodations, getAccommodationById } from '../api/acommodationApi'
 import { useUserStore } from '../store/useUserStore.js'
 
@@ -15,9 +15,7 @@ export const useAllAccommodations = (params = {}) => {
     
     // Ждем гидратации Zustand (работает и для авторизованных, и для гостей)
     enabled: hasHydrated !== false, 
-    
-    staleTime: 1000 * 60,
-    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -29,9 +27,7 @@ export const useAccommodationById = (id) => {
 
   return useQuery({
     queryKey: ['accommodation', String(id), userId],
-    queryFn: () => getAccommodationById(id, userId),
+    queryFn: () => getAccommodationById(id),
     enabled: Boolean(id) && hasHydrated !== false,
-    staleTime: 1000 * 60,
-    refetchOnWindowFocus: false,
   })
 }
