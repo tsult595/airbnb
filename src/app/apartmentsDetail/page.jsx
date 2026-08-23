@@ -123,7 +123,10 @@ const ApartmentsDetailContent = () => {
 
             <section className="grid gap-6 lg:grid-cols-[1fr_420px] items-start">
              <DescriptionComponent accommodation={apartment} />
-             <BookingSearchCard pricePerNight={price} />
+            <BookingSearchCard 
+            accommodationId={id || apartment.id} 
+            pricePerNight={price} 
+            />
             </section>
             <CommentSection />
             <LocationSection accommodation={apartment} />

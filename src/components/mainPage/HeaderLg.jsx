@@ -166,6 +166,7 @@ const HeaderLg = () => {
                     selected={dateRange}
                     onSelect={setDateRange}
                     numberOfMonths={2}
+                    disabled={{ before: startOfToday() }}
                     locale={ru}
                     className="rounded-xl"
                   />
