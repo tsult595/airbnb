@@ -1,6 +1,7 @@
 "use client"
 
-import React from "react"
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   BriefcaseBusiness,
   Users,
@@ -70,12 +71,12 @@ const UserProfile = () => {
 
 
             {/* TRIPS */}
-
-            <button
-              type="button"
-              className="
-                flex
-                w-full
+              <Link href="/userBookings">
+              <button
+                type="button"
+                className="
+                  flex
+                  w-full
                 items-center
                 gap-5
                 rounded-2xl
@@ -90,11 +91,12 @@ const UserProfile = () => {
               <BriefcaseBusiness className="h-7 w-7 text-gray-700" />
 
               <span className="text-[19px] font-medium">
-                Прошлые поездки
+                Поездки
               </span>
 
             </button>
-
+              </Link>
+      
 
             {/* CONTACTS */}
 

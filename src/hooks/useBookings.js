@@ -30,12 +30,12 @@ export const useCreateBooking = () => {
 // 2. Хук для получения списка всех бронирований пользователя
 export const useUserBookings = (userId) => {
   return useQuery({
-    queryKey: ['userBookings', userId],
+    queryKey: ['userBookings', String(userId)],
     queryFn: async () => {
-      // Исправлен URL: путь совпадает с роутером /accommodations/user/:userId/bookings
       const response = await api.get(`/accommodations/user/${userId}/bookings`)
       return response.data
     },
     enabled: Boolean(userId),
+    staleTime: 0, // 🟢 Данные мгновенно считаются устаревшими и обновляются при инвалидации
   })
 }
