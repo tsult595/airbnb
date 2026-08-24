@@ -3,9 +3,9 @@
 import React from 'react'
 import { Heart, Home } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import Card from '../../components/ui/Card.jsx'
-import { useUserStore } from '../../store/useUserStore.js'
-import { useFavorites } from '../../hooks/useFavorites.js'
+import Card from '../../../components/ui/Card.jsx'
+import { useUserStore } from '../../../store/useUserStore.js'
+import { useFavorites } from '../../../hooks/useFavorites.js'
 
 const FavoritesApartments = () => {
   const router = useRouter()

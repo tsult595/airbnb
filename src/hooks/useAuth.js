@@ -9,11 +9,18 @@ export const useAuth = ({ authMode, onSuccess, onError } = {}) => {
         ? login(email, password) 
         : registerUser(email, password, avatar)
     },
-    onSuccess: (data) => {
-      if (data?.token) {
-        localStorage.setItem('token', data.token)
+    onSuccess: (responseData) => {
+      // 🟢 Универсально извлекаем token и user (учитывая Axios или Fetch)
+      const token = responseData?.token || responseData?.data?.token
+      const user = responseData?.user || responseData?.data?.user
+
+      if (token) {
+        localStorage.setItem('token', token)
       }
-      if (onSuccess) onSuccess(data)
+
+      if (onSuccess) {
+        onSuccess({ token, user })
+      }
     },
     onError: (error) => {
       const message = error?.response?.data?.message || 'Произошла ошибка при авторизации'
@@ -21,6 +28,8 @@ export const useAuth = ({ authMode, onSuccess, onError } = {}) => {
     }
   })
 }
+
+
 
 export const useLogout = ({ onSuccess, onError } = {}) => {
   const queryClient = useQueryClient()

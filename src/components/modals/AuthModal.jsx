@@ -2,16 +2,15 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useGoogleLogin } from '@react-oauth/google'
 import { X, Camera, User } from 'lucide-react'
 import Image from 'next/image'
-import { useUserStore } from '../../store/useUserStore.js'
 
-import { login, register as registerUser, loginWithGoogle } from '../../api/authApi.js'
+import { useUserStore } from '../../store/useUserStore.js'
 import { loginSchema, registerSchema } from '../../schemas/auth.schema.js'
+import { useAuth } from '@/src/hooks/useAuth.js'
+
 const AuthModal = ({ isOpen, onClose }) => {
   const setUser = useUserStore((state) => state.setUser)
   const router = useRouter()
@@ -35,11 +34,43 @@ const AuthModal = ({ isOpen, onClose }) => {
     mode: 'onChange',
   })
 
-  // 🟢 Конвертация загруженной картинки в Base64
+  // 🟢 Хук авторизации
+ const { mutate, isPending } = useAuth({
+  authMode,
+  onSuccess: ({ token, user }) => {
+    console.log('Пользователь при входе:', user) // 👈 Открой консоль (F12) и проверь
+
+    if (!token) {
+      setServerError('Не удалось получить токен от сервера')
+      return
+    }
+
+    if (user) {
+      setUser(user)
+    }
+
+    onClose()
+
+    // 🟢 Безопасная проверка роли
+    const userRole = user?.role?.trim().toLowerCase()
+    if (userRole === 'admin' || userRole === 'manager') {
+      router.push('/admin')
+    } else {
+      router.push('/')
+    }
+  },
+  onError: (errorMessage) => {
+    setServerError(errorMessage)
+  }
+})
+
+  if (!isOpen) return null
+
+  // 🟢 Конвертация аватара в Base64
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // Ограничение 2MB
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
         setServerError('Размер фото не должен превышать 2 МБ')
         return
       }
@@ -48,65 +79,11 @@ const AuthModal = ({ isOpen, onClose }) => {
       reader.onloadend = () => {
         const base64String = reader.result
         setAvatarPreview(base64String)
-        setValue('avatar', base64String) // Записываем строку в react-hook-form
+        setValue('avatar', base64String)
       }
       reader.readAsDataURL(file)
     }
   }
-
- const handleAuthSuccess = (data) => {
-    const token = data?.token || data?.data?.token
-    const user = data?.user || data?.data?.user
-
-    if (token) {
-      localStorage.setItem('token', token)
-      
-      // 🟢 Записываем юзера в Zustand store!
-      if (user) {
-        setUser(user)
-      }
-
-      onClose()
-      router.push('/')
-    } else {
-      setServerError('Не удалось получить токен от сервера')
-    }
-  }
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: ({ email, password, avatar }) => {
-      return authMode === 'signin'
-        ? login(email, password)
-        : registerUser(email, password, avatar)
-    },
-    onSuccess: handleAuthSuccess,
-    onError: (error) => {
-      const message = error?.response?.data?.message || 'Произошла ошибка при входе'
-      setServerError(message)
-    },
-  })
-
-  const googleMutation = useMutation({
-    mutationFn: (googleToken) => loginWithGoogle(googleToken),
-    onSuccess: handleAuthSuccess,
-    onError: (error) => {
-      const message = error?.response?.data?.message || 'Ошибка авторизации через Google'
-      setServerError(message)
-    },
-  })
-
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: (credentialResponse) => {
-      if (credentialResponse.access_token) {
-        googleMutation.mutate(credentialResponse.access_token)
-      }
-    },
-    onError: () => {
-      setServerError('Ошибка подключения к Google')
-    },
-  })
-
-  if (!isOpen) return null
 
   const handleTabChange = (mode) => {
     setAuthMode(mode)
@@ -121,7 +98,10 @@ const AuthModal = ({ isOpen, onClose }) => {
     mutate({ email: data.email, password: data.password, avatar: data.avatar })
   }
 
-  const isLoading = isPending || googleMutation.isPending
+  // Временная заглушка для Google Входа (чтобы не падала ошибка)
+  const handleGoogleLogin = () => {
+    console.log('Google auth placeholder')
+  }
 
   return (
     <div
@@ -142,7 +122,7 @@ const AuthModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Переключатель табов */}
+        {/* Табы */}
         <div className="flex gap-2 px-6 pt-5">
           <button
             type="button"
@@ -172,7 +152,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* 🟢 Блок загрузки аватара (только для регистрации) */}
+          {/* Аватар */}
           {authMode === 'register' && (
             <div className="flex flex-col items-center justify-center mb-4">
               <div
@@ -203,7 +183,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* Поле Email */}
+          {/* Email */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               {authMode === 'signin' ? 'Email or username' : 'Email'}
@@ -223,7 +203,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Поле Password */}
+          {/* Password */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
             <input
@@ -249,26 +229,26 @@ const AuthModal = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* Кнопка отправки формы */}
+          {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isPending}
             className="w-full rounded-full bg-[#FF385C] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#E00B41] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Loading...' : authMode === 'signin' ? 'Sign in' : 'Register'}
+            {isPending ? 'Loading...' : authMode === 'signin' ? 'Sign in' : 'Register'}
           </button>
 
-          {/* Разделитель "OR" */}
+          {/* OR */}
           <div className="relative my-4 flex items-center justify-center">
             <div className="w-full border-t border-gray-200"></div>
             <span className="absolute bg-white px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
           </div>
 
-          {/* Кнопка Google */}
+          {/* Google Button */}
           <button
             type="button"
-            onClick={() => handleGoogleLogin()}
-            disabled={isLoading}
+            onClick={handleGoogleLogin}
+            disabled={isPending}
             className="flex w-full items-center justify-center gap-3 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 active:scale-[0.99] disabled:opacity-50"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">

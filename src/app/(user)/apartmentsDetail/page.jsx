@@ -1,17 +1,17 @@
 'use client'
 
-import AllRecommendationsHeaderSm from '../../components/AllRecommendationsHeaderSm'
-import HeaderLg from '../../components/mainPage/HeaderLg'
+import AllRecommendationsHeaderSm from '../../../components/AllRecommendationsHeaderSm.jsx'
+import HeaderLg from '../../../components/mainPage/HeaderLg.jsx'
 import { ArrowLeft, Share2, Heart} from 'lucide-react'
 import Link from 'next/link'
 import Image from "next/image"
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
-import { useAccommodationById } from '../../hooks/useAccommodationsQuery.js'
-import BookingSearchCard from '../../components/detailsPage/BookingSearchCard.jsx'
-import CommentSection from '../../components/detailsPage/CommentSection.jsx'
-import LocationSection from '../../components/detailsPage/LocationSection.jsx'
-import DescriptionComponent from '../../components/detailsPage/DescriptionComponent.jsx'
+import { useAccommodationById } from '../../../hooks/useAccommodationsQuery.js'
+import BookingSearchCard from '../../../components/detailsPage/BookingSearchCard.jsx'
+import CommentSection from '../../../components/detailsPage/CommentSection.jsx'
+import LocationSection from '../../../components/detailsPage/LocationSection.jsx'
+import DescriptionComponent from '../../../components/detailsPage/DescriptionComponent.jsx'
 
 const ApartmentsDetailContent = () => {
   const searchParams = useSearchParams() 

@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "src/app/layout.jsx", "src/components/mainPage/HeaderLg.jsx", "next.config copy.ts", "src/components/Pagination.jsx", "src/app/userBookings/page.jsx"  ],
+, "src/app/(user)/layout.jsx", "src/components/mainPage/HeaderLg.jsx", "next.config copy.ts", "src/components/Pagination.jsx", "src/app/(user)/userBookings/page.jsx", "src/app/(user)/page.jsx"  ],
   "exclude": ["node_modules"]
 }

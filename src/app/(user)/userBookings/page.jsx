@@ -1,7 +1,7 @@
 "use client"
 
-import { useUserStore } from '../../store/useUserStore.js'
-import { useUserBookings } from '../../hooks/useBookings.js'
+import { useUserStore } from '../../../store/useUserStore.js'
+import { useUserBookings } from '../../../hooks/useBookings.js'
 import Image from 'next/image'
 
 const UserBookings = () => {

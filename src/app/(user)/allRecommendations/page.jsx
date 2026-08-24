@@ -6,15 +6,15 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
-import { useSearchStore } from '../../store/useSearchStore.js'
-import { useAllAccommodations } from '../../hooks/useAccommodationsQuery'
-import { getAccommodationItems, getAccommodationTotalPages } from '../../api/acommodationApi'
-import AllRecommendationsHeader from '../../components/AllRecommendationsHeader.jsx'
-import AllRecommendationsHeaderSm from '../../components/AllRecommendationsHeaderSm.jsx'
-import CardWithArrow from '../../components/ui/CardWithArrow.jsx'
-import Pagination from '../../components/Pagination.jsx'
+import { useSearchStore } from '../../../store/useSearchStore.js'
+import { useAllAccommodations } from '../../../hooks/useAccommodationsQuery.js'
+import { getAccommodationItems, getAccommodationTotalPages } from '../../../api/acommodationApi.js'
+import AllRecommendationsHeader from '../../../components/AllRecommendationsHeader.jsx'
+import AllRecommendationsHeaderSm from '../../../components/AllRecommendationsHeaderSm.jsx'
+import CardWithArrow from '../../../components/ui/CardWithArrow.jsx'
+import Pagination from '../../../components/Pagination.jsx'
 
-const Map = dynamic(() => import('../../components/Map.jsx'), {
+const Map = dynamic(() => import('../../../components/Map.jsx'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full min-h-[400px] bg-gray-100 animate-pulse rounded-3xl flex items-center justify-center text-gray-400">
