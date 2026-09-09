@@ -31,7 +31,8 @@ const AuthModal = ({ isOpen, onClose }) => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(currentSchema),
-    mode: 'onChange',
+  mode: "onBlur",
+  reValidateMode: "onChange",
   })
 
   // 🟢 Хук авторизации

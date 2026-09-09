@@ -5,19 +5,33 @@ import { format } from "date-fns"
 import { ru } from "date-fns/locale"
 import logo from '../assets/airbnb.png'
 import AuthModal from './modals/AuthModal.jsx'
+import AvatarModal from './modals/AvatarModal.jsx'
 import { Globe, Menu, Search, SlidersHorizontal } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useSearchStore } from '../store/useSearchStore.js'
+import { useUserStore } from '../store/useUserStore.js'
 
 const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const {
     dateRange,
-    setDateRange
+    setDateRange,
+    location,
+    setLocation
   } = useSearchStore()
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const user = useUserStore((state) => state.user)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const calendarRef = useRef(null)
   const calendarTriggerRef = useRef(null)
@@ -74,6 +88,19 @@ const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
     return "Когда?"
   }
 
+  const handleSearch = () => {
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (location.trim()) {
+      params.set('city', location.trim())
+    } else {
+      params.delete('city')
+    }
+
+    params.delete('page')
+    router.push(`/allRecommendations?${params.toString()}`, { scroll: false })
+  }
+
   return (
     <>
       <header className="w-full mx-auto px-6 bg-white fixed top-0 left-0 right-0 z-50 flex flex-col border-b border-gray-100">
@@ -104,6 +131,8 @@ const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
                 <input
                   type="text"
                   placeholder="Поиск направлений"
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
                   className="w-full text-sm text-gray-600 bg-transparent outline-none placeholder:text-gray-400 font-normal truncate"
                 />
               </div>
@@ -151,6 +180,7 @@ const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
               {/* SEARCH BUTTON */}
               <button
                 type="button"
+                onClick={handleSearch}
                 className="bg-[#FF385C] hover:bg-[#E00B41] text-white p-3.5 rounded-full transition-colors flex items-center justify-center shrink-0 shadow-md active:scale-95"
               >
                 <Search className="w-5 h-5 stroke-[2.5]" />
@@ -179,20 +209,47 @@ const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
 
           {/* RIGHT BUTTONS */}
           <div className="shrink-0 flex items-center gap-2">
-            <button
-              type="button"
-              className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700"
-            >
-              <Globe className="w-5 h-5" />
-            </button>
+            {!isMounted ? (
+              <div className="h-9 w-20 rounded-full bg-gray-50/50" />
+            ) : user ? (
+              <button
+                type="button"
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="relative h-9 w-9 overflow-hidden rounded-full border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-all"
+                aria-label="Открыть меню профиля"
+              >
+                {user.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt={user.name || "Аватар пользователя"}
+                    className="h-full w-full object-cover"
+                    width={36}
+                    height={36}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gray-900 text-xs font-semibold text-white">
+                    {user.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700"
+                >
+                  <Globe className="w-5 h-5" />
+                </button>
 
-            <button
-              type="button"
-              onClick={() => setIsAuthModalOpen(true)}
-              className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700 bg-gray-50/50 border border-gray-200"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700 bg-gray-50/50 border border-gray-200"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+              </>
+            )}
           </div>
 
         </div>
@@ -237,6 +294,11 @@ const AllRecommendationsHeader = ({ activeChips = [], onToggleChip }) => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      <AvatarModal
+        isOpen={isAvatarModalOpen}
+        onClose={() => setIsAvatarModalOpen(false)}
       />
     </>
   )

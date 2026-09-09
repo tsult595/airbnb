@@ -66,9 +66,13 @@ function AllRecommendationsContent() {
   }
 
   // 3. Категории и спец-флаги
+  
+
   const categoryMap = {
     apartments: 'apartment',
+    apartment: 'apartment',
     hotels: 'hotel',
+    hotel: 'hotel',
     all: undefined,
   }
 

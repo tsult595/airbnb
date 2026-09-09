@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from "next/image"
 import logo from '../../assets/airbnb.png'
 import { Globe, Menu, Search } from "lucide-react"
@@ -8,23 +9,28 @@ import AuthModal from '../modals/AuthModal'
 import AvatarModal from '../modals/AvatarModal'
 import { useSearchStore } from '../../store/useSearchStore'
 import Link from 'next/link'
-// Импорты для календаря
-import { Calendar } from "../ui/chadcn/calendar"
+import { DayPicker } from 'react-day-picker'
+import 'react-day-picker/dist/style.css'
 import { format } from "date-fns"
 import { ru } from "date-fns/locale"
 import { useUserStore } from '../../store/useUserStore.js'
 
 const HeaderLg = () => {
-  const { activeTab, setActiveTab, dateRange, setDateRange } = useSearchStore()
+  const router = useRouter()
+  const { activeTab, setActiveTab, dateRange, setDateRange, location, setLocation } = useSearchStore()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false)
-  // Состояния для календаря
+  
+  const [isMounted, setIsMounted] = useState(false)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const calendarRef = useRef(null)
   const user = useUserStore((state) => state.user)
 
-  // Закрытие календаря при клике снаружи
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
@@ -35,12 +41,11 @@ const HeaderLg = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Отслеживание скролла
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
         setIsScrolled(true)
-        setIsCalendarOpen(false) // Скрываем календарь при скролле
+        setIsCalendarOpen(false)
       } else {
         setIsScrolled(false)
       }
@@ -50,14 +55,42 @@ const HeaderLg = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Категории с ключами, совпадающими с вашим бэкендом/URL
   const categories = [
     { id: 'all', label: 'Все', icon: '🌎' },
-    { id: 'homes', label: 'Жилье', icon: '🏡' },
-    { id: 'experiences', label: 'Впечатления', icon: '🎈' },
+    { id: 'apartments', label: 'Жилье', icon: '🏡' },
+    { id: 'hotels', label: 'Отели', icon: '🏨' },
     { id: 'services', label: 'Услуги', icon: '🔔' },
   ]
 
-  // Форматирование отображаемой даты
+  // Обработчик переключения категории с переходом на страницу
+  const handleCategoryClick = (catId) => {
+    setActiveTab(catId)
+    setIsCalendarOpen(false)
+
+    if (catId === 'all') {
+      router.push('/allRecommendations')
+    } else {
+      router.push(`/allRecommendations?category=${catId}`)
+    }
+  }
+
+  const handleSearch = () => {
+    setIsCalendarOpen(false)
+    const params = new URLSearchParams()
+
+    if (activeTab && activeTab !== 'all') {
+      params.set('category', activeTab)
+    }
+
+    if (location.trim()) {
+      params.set('city', location.trim())
+    }
+
+    const query = params.toString()
+    router.push(query ? `/allRecommendations?${query}` : '/allRecommendations')
+  }
+
   const getFormattedDate = () => {
     if (dateRange?.from) {
       if (dateRange?.to) {
@@ -71,14 +104,10 @@ const HeaderLg = () => {
   return (
     <>
       <div className="w-full max-w-7xl mx-auto px-6 bg-white transition-all duration-300 relative">
-        
-        {/* Главная строчка шапки */}
-        <div 
-          className={`w-full flex items-center justify-between transition-all duration-300 ${
-            isScrolled ? 'py-2.5' : 'py-4'
-          }`}
-        >
-          {/* 1. Логотип */}
+        <div className={`w-full flex items-center justify-between transition-all duration-300 ${
+          isScrolled ? 'py-2.5' : 'py-4'
+        }`}>
+          {/* Логотип */}
           <div className="flex-1 flex justify-start shrink-0">
             <Link href="/">
               <Image 
@@ -86,18 +115,18 @@ const HeaderLg = () => {
                 alt="Airbnb" 
                 width={102} 
                 height={32} 
-              className="object-contain cursor-pointer" 
-            />
+                className="object-contain cursor-pointer" 
+              />
             </Link>
           </div>
 
-          {/* 2. ТАБЫ КАТЕГОРИЙ (показываются когда НЕ скроллим) */}
+          {/* Табы Категорий */}
           {!isScrolled && (
             <div className="flex items-center gap-8 transition-all duration-300">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => setActiveTab(cat.id)}
+                  onClick={() => handleCategoryClick(cat.id)}
                   className={`relative flex items-center gap-2 pb-2 text-sm font-medium transition-colors ${
                     activeTab === cat.id ? 'text-black' : 'text-gray-500 hover:text-black'
                   }`}
@@ -112,20 +141,15 @@ const HeaderLg = () => {
             </div>
           )}
 
-          {/* 3. МИНИ-ПОИСК (показывается при скролле) */}
+          {/* Мини-поиск при скролле */}
           {isScrolled && (
             <div className="flex-1 max-w-md mx-4 animate-in fade-in zoom-in-95 duration-200 relative">
               <div className="flex items-center justify-between bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-shadow py-1.5 pl-3 pr-1.5">
                 <div className="flex items-center gap-2 text-xs font-semibold text-gray-800 flex-1 min-w-0">
-                  
-                  {/* Где */}
                   <div className="px-2 py-0.5 hover:bg-gray-100 rounded-full cursor-pointer transition-colors truncate">
                     Где угодно
                   </div>
-
                   <div className="h-3.5 w-[1px] bg-gray-200 shrink-0" />
-
-                  {/* Когда (Открывает календарь) */}
                   <div
                     onClick={() => setIsCalendarOpen((prev) => !prev)}
                     className={`px-2 py-0.5 rounded-full cursor-pointer transition-colors truncate ${
@@ -136,48 +160,48 @@ const HeaderLg = () => {
                   >
                     {getFormattedDate() !== "Когда?" ? getFormattedDate() : "Когда угодно"}
                   </div>
-
                   <div className="h-3.5 w-[1px] bg-gray-200 shrink-0" />
-
-                  {/* Кто */}
                   <div className="px-2 py-0.5 hover:bg-gray-100 rounded-full cursor-pointer transition-colors font-normal text-gray-500 truncate">
                     Кто угодно
                   </div>
                 </div>
 
-                {/* Кнопка поиска */}
                 <button 
                   type="button"
+                  onClick={handleSearch}
                   className="bg-[#FF385C] hover:bg-[#E00B41] text-white p-2 rounded-full transition-colors shrink-0 ml-1 active:scale-95"
                 >
                   <Search className="w-3.5 h-3.5 stroke-[3]" />
                 </button>
               </div>
 
-              {/* КАЛЕНДАРЬ ДЛЯ МИНИ-ВЕРСИИ */}
               {isCalendarOpen && (
                 <div 
                   ref={calendarRef}
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-150"
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 bg-white rounded-3xl p-4 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-150 flex justify-center"
                 >
-                  <Calendar
+                  <DayPicker
                     mode="range"
-                    defaultMonth={dateRange?.from}
+                    locale={ru}
                     selected={dateRange}
                     onSelect={setDateRange}
+                    disabled={{ before: new Date() }}
                     numberOfMonths={2}
-                    disabled={{ before: startOfToday() }}
-                    locale={ru}
-                    className="rounded-xl"
+                    modifiersStyles={{
+                      selected: { backgroundColor: '#F43F5E', color: 'white' },
+                      disabled: { textDecoration: 'line-through', opacity: 0.4 }
+                    }}
                   />
                 </div>
               )}
             </div>
           )}
 
-          {/* 4. Кнопки справа */}
+          {/* Авторизация / Профиль */}
           <div className="flex-1 flex justify-end items-center gap-2 shrink-0">
-            {user ? (
+            {!isMounted ? (
+              <div className="h-9 w-20 rounded-full bg-gray-50/50" />
+            ) : user ? (
               <button
                 type="button"
                 onClick={() => setIsAvatarModalOpen(true)}
@@ -199,38 +223,44 @@ const HeaderLg = () => {
                 )}
               </button>
             ) : (
-              <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700">
-                <Globe className="w-5 h-5" />
-              </button>
+              <>
+                <button 
+                  type="button" 
+                  className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700"
+                >
+                  <Globe className="w-5 h-5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700 bg-gray-50/50 border border-gray-200"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+              </>
             )}
-            <button
-              type="button"
-              onClick={() => setIsAuthModalOpen(true)}
-              className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700 bg-gray-50/50 border border-gray-200"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
           </div>
         </div>
 
-        {/* 5. БОЛЬШОЙ ПОИСК СНИЗУ (когда НЕ скроллим) */}
+        {/* Большой поиск */}
         {!isScrolled && (
           <div className="w-full flex justify-center pb-4 animate-in fade-in duration-200 relative">
             <div className="flex items-center bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-200 py-2 px-3 w-full max-w-3xl cursor-pointer">
               
-              {/* Раздел: Где */}
               <div className="flex-1 px-6 py-1 hover:bg-gray-100/70 rounded-full transition-colors">
                 <div className="text-xs font-semibold text-gray-800">Где</div>
                 <input 
                   type="text" 
                   placeholder="Поиск направлений" 
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
                   className="w-full text-sm text-gray-600 bg-transparent outline-none placeholder:text-gray-400 font-normal truncate"
                 />
               </div>
 
               <div className="h-8 w-[1px] bg-gray-200" />
 
-              {/* Раздел: Когда (Открывает календарь) */}
               <div 
                 onClick={() => setIsCalendarOpen((prev) => !prev)}
                 className={`flex-1 px-6 py-1 rounded-full transition-colors ${
@@ -245,7 +275,6 @@ const HeaderLg = () => {
 
               <div className="h-8 w-[1px] bg-gray-200" />
 
-              {/* Раздел: Кто */}
               <div className="flex-1 px-6 py-1 hover:bg-gray-100/70 rounded-full transition-colors flex items-center justify-between">
                 <div>
                   <div className="text-xs font-semibold text-gray-800">Кто</div>
@@ -253,33 +282,37 @@ const HeaderLg = () => {
                 </div>
               </div>
 
-              <button className="bg-[#FF385C] hover:bg-[#E00B41] text-white p-3.5 rounded-full transition-colors flex items-center justify-center shrink-0 shadow-md active:scale-95">
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="bg-[#FF385C] hover:bg-[#E00B41] text-white p-3.5 rounded-full transition-colors flex items-center justify-center shrink-0 shadow-md active:scale-95"
+              >
                 <Search className="w-5 h-5 stroke-[2.5]" />
               </button>
 
             </div>
 
-            {/* КАЛЕНДАРЬ ДЛЯ БОЛЬШОЙ ВЕРСИИ */}
             {isCalendarOpen && (
               <div 
                 ref={calendarRef}
-                className="absolute top-full mt-3 z-50 bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-150"
+                className="absolute top-full mt-3 z-50 bg-white rounded-3xl p-4 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-150 flex justify-center"
               >
-                <Calendar
+                <DayPicker
                   mode="range"
-                  defaultMonth={dateRange?.from}
+                  locale={ru}
                   selected={dateRange}
                   onSelect={setDateRange}
+                  disabled={{ before: new Date() }}
                   numberOfMonths={2}
-                  locale={ru}
-                  className="rounded-xl"
+                  modifiersStyles={{
+                    selected: { backgroundColor: '#F43F5E', color: 'white' },
+                    disabled: { textDecoration: 'line-through', opacity: 0.4 }
+                  }}
                 />
               </div>
             )}
-
           </div>
         )}
-
       </div>
 
       <AuthModal 
